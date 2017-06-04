@@ -1,10 +1,13 @@
 #!/bin/bash
 
 function listen {
-	omxplayer -o hdmi -live tcp://127.0.0.1:8090?listen &
+	fuser 8090/tcp
+	killall omxplayer
+	sleep 2
+	omxplayer -o hdmi --lavfdopts probesize:10000 --timeout 0 -live tcp://0.0.0.0:8090?listen &
 	while :
 	do
-		connection=$(netstat -tnpa 2>/dev/null| grep "127.0.0.1:8090 *LISTEN.*")
+		connection=$(netstat -tnpa 2>/dev/null| grep "0.0.0.0:8090 .* LISTEN")
 		sleep 2
 		if [[ "$connection" = "" ]]
 		then
@@ -19,7 +22,7 @@ function active {
 	sleep 5
 	while :
 	do
-		connection=$(netstat -tnpa 2>/dev/null| grep "127.0.0.1:8090 *ESTABLISHED.*")
+		connection=$(netstat -tnpa 2>/dev/null| grep ":8090 .* ESTABLISHED")
 		sleep 2
 		if [[ "$connection" = "" ]]
 		then
