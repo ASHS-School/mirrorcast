@@ -103,7 +103,7 @@ class TrayMenu:
                 #subprocess.call("amixer set Capture toggle", shell=True)
             except:
                 print("Cannot change pulse audio output to headphones")
-            subprocess.call("ffmpeg -f pulse -ac 2 -i default -async 1 -f x11grab -r 30 -s " + str(self.resolution) + " -i :" + str(self.xoffset) + "." + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=1280:720 -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
+            subprocess.call("ffmpeg -f pulse -ac 2 -i default -async 1 -f x11grab -r 30 -s " + str(self.resolution) + " -i :0.0+" + str(self.xoffset) + "," + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=1280:720 -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
         else:
             try:
                 #Switch audio back to laptop speakers
