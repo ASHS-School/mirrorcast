@@ -1,3 +1,4 @@
+'''Applet for Debian/Ubuntu Systems'''
 import os
 import time
 import subprocess
