@@ -1,14 +1,17 @@
 #!/bin/bash
 
 function listen {
-	ffplay -fs -probesize 32 -sync ext tcp://127.0.0.1:8090?listen &
+	killall ffplay*
+	fuser -k 8090/tcp
+	nohup ffplay -probesize 8000 -sync ext tcp://0.0.0.0:8090?listen &
 	while :
 	do
-		connection=$(netstat -tnpa 2>/dev/null| grep "0.0.0.0:8090 .* LISTEN")
-		sleep 2
+		sleep 1
+		connection=$(netstat -tnpa 2>/dev/null| grep ":8090 .* LISTEN")
+		sleep 1
 		if [[ "$connection" = "" ]]
 		then
-			echo "listening"
+			echo "established"
 			break
 		fi
 	done
@@ -19,13 +22,14 @@ function active {
 	sleep 5
 	while :
 	do
-		connection=$(netstat -tnpa 2>/dev/null| grep ":8090 .* ESTABLISHED")
-		sleep 2
+		sleep 1
+		connection=$(netstat -tnpa 2>/dev/null| grep ":8090 .*ESTABLISHED")
+		sleep 1
 		if [[ "$connection" = "" ]]
 		then
-			echo "kiling"
-			killall ffplay
-			fuser 8090/tcp
+			echo "lost connection"
+			killall ffplay*
+			fuser -k 8090/tcp
 			break
 		fi
 	done
