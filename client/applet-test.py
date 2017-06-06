@@ -93,19 +93,22 @@ class TrayMenu:
             time.sleep(1)
             os.system("fuser 8090/tcp && killall ffmpeg")
             try:
-                #Try to mute sound on laptop as it will play over hdmi
+                #Try to mute sound on laptop as it will be playing over hdmi
+		#Pulse audio needs to be initalised first
+                subprocess.call("pulseaudio &", shell=True)
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
                 time.sleep(1)
                 subprocess.call("pacmd set-sink-port 0 analog-output-headphones &", shell=True)
+                #subprocess.call("amixer set Capture toggle", shell=True)
             except:
-                print("Cannot change pulse audio output")
+                print("Cannot change pulse audio output to headphones")
             subprocess.call("ffmpeg -f pulse -ac 2 -i default -async 1 -f x11grab -r 30 -s " + str(self.resolution) + " -i :" + str(self.xoffset) + "." + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=1280:720 -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
         else:
             try:
                 #Switch audio back to laptop speakers
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
             except:
-                print("Cannot change pulse audio output")
+                print("Cannot change pulse audio output back to speakers")
             subprocess.call("fuser 8090/tcp & killall ffmpeg &", shell=True)
             w.set_label('Start Mirroring')
             self.menu = gtk.Menu()
@@ -116,7 +119,7 @@ class TrayMenu:
             #Switch audio back to laptop speakers
             os.system("pacmd set-sink-port 0 analog-output-speaker")
         except:
-            print("Failed to change pulse audio output")
+            print("Failed to change pulse audio output back to speakers")
         subprocess.call("fuser 8090/tcp & killall ffmpeg &", shell=True)
         gtk.main_quit()
     
