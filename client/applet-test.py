@@ -104,7 +104,7 @@ class TrayMenu:
                 #subprocess.call("amixer set Capture toggle", shell=True)
             except:
                 print("Cannot change pulse audio output to headphones")
-            subprocess.call("ffmpeg -f pulse -ac 2 -i default -async 1 -f x11grab -r 30 -s " + str(self.resolution) + " -i :0.0+" + str(self.xoffset) + "," + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=1360:768 -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
+            subprocess.call("ffmpeg -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(self.resolution) + " -i :0.0+" + str(self.xoffset) + "," + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(self.resolution).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
             try:
                 #Change Audio to record system sound
                 time.sleep(4)
@@ -166,6 +166,12 @@ class TrayMenu:
         except:
             print("cannot get width and height")
         return displays
+    
+    def divisor(x, y):
+        #To calculate aspect ratio
+        if y == 0:
+            return x
+        return divisor(y, x % y)
 
 def main():
     gtk.main()
