@@ -1,4 +1,4 @@
-'''Applet for Debian/Ubuntu Systems'''
+'''Rough applet for Debian/Ubuntu Systems'''
 import os
 import time
 import subprocess
@@ -94,20 +94,38 @@ class TrayMenu:
             time.sleep(1)
             os.system("fuser 8090/tcp && killall ffmpeg")
             try:
-                #Try to mute sound on laptop as it will be playing over hdmi
-		#Pulse audio needs to be initalised first
+                #Mute microphone
                 subprocess.call("pulseaudio &", shell=True)
+                subprocess.call("amixer set Capture nocap &", shell=True)
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
                 time.sleep(1)
+                #Change laptop audio to headphones which are hopefully not plugged in.
                 subprocess.call("pacmd set-sink-port 0 analog-output-headphones &", shell=True)
                 #subprocess.call("amixer set Capture toggle", shell=True)
             except:
                 print("Cannot change pulse audio output to headphones")
-            subprocess.call("ffmpeg -f pulse -ac 2 -i default -async 1 -f x11grab -r 30 -s " + str(self.resolution) + " -i :0.0+" + str(self.xoffset) + "," + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=1280:720 -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
+            subprocess.call("ffmpeg -f pulse -ac 2 -i default -async 1 -f x11grab -r 30 -s " + str(self.resolution) + " -i :0.0+" + str(self.xoffset) + "," + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=1360:768 -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
+            try:
+                #Change Audio to record system sound
+                time.sleep(4)
+                audiostreams = subprocess.check_output("pactl list source-outputs |grep -o -P '(?<=Source Output #).*(?=.*)'", shell=True)
+                audiostreams = audiostreams.splitlines()
+                audiostream_names = subprocess.check_output("pactl list source-outputs |grep -o -P '(?<=application.name = \").*(?=\")'", shell=True)
+                audiostream_names = audiostream_names.splitlines()
+                for i in range(len(audiostreams)):
+                    if "Lav" in str(audiostream_names[i]):
+                        stream = int(audiostreams[i])
+                        break
+                audiosource = subprocess.check_output("pactl list short sources | grep -o -P '(?<=\d\t).*analog-stereo(?=.monitor)'", shell=True)
+                audiosource = audiosource.splitlines()
+                subprocess.call("pactl move-source-output " + str(stream) + " " + str(audiosource[0])[1:].strip('\'') + ".monitor", shell=True)
+            except:
+                print("Failed changing pulse audio settings")
         else:
             try:
                 #Switch audio back to laptop speakers
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
+                subprocess.call("amixer set Capture cap &", shell=True)
             except:
                 print("Cannot change pulse audio output back to speakers")
             subprocess.call("fuser 8090/tcp & killall ffmpeg &", shell=True)
@@ -119,6 +137,7 @@ class TrayMenu:
         try:
             #Switch audio back to laptop speakers
             os.system("pacmd set-sink-port 0 analog-output-speaker")
+            subprocess.call("amixer set Capture nocap &", shell=True)
         except:
             print("Failed to change pulse audio output back to speakers")
         subprocess.call("fuser 8090/tcp & killall ffmpeg &", shell=True)
