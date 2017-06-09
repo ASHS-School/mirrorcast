@@ -7,7 +7,7 @@ Google chromes screen mirroring feature is very good when used with a receiver s
 
 <p>This application is ideal for wireless projection, no more cables, just send your desktop over the network to a receiver</P>
 
-<p>At the moment, there is only a client for Debian/Ubuntu Operating systems and I have no plans to create a client application. There is a server/receiver application for raspberry pi and Linux</p>
+<p>At the moment, there is only a client for Debian/Ubuntu Operating systems. There is a server/receiver application for raspberry pi and Linux</p>
 
 <p>Mirrorcast aims to be a low latency screen mirroring solution with high quality video and audio at 25-30fps, the later is why will not use VNC.</p>
 
