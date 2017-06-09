@@ -1,13 +1,16 @@
-'''Rough applet for Debian/Ubuntu Systems'''
+'''Rough applet for Debian/Ubuntu Systems
+Mirrorcast Version 0.1b'''
 import os
 import time
 import subprocess
 import gi
 import re
+import socket
 gi.require_version('AppIndicator3', '0.1')
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
 from gi.repository import AppIndicator3 as appindicator
+from gi.repository import Notify as notify
 
 class TrayMenu:
     def __init__(self):           
@@ -16,6 +19,7 @@ class TrayMenu:
         self.status = "stop"
         self.menu = gtk.Menu()
         
+        #Set up menu
         item_start= gtk.MenuItem('Start Mirroring') 
         item_start.connect('activate', self.start)
         self.menu.append(item_start)
@@ -27,7 +31,7 @@ class TrayMenu:
         self.outputSub = gtk.Menu()
         output = gtk.MenuItem("Cast To")
         output.set_submenu(self.outputSub)
-        #Create Loop to detect receivers
+        #load list of receivers from file
         self.receivers = []
         try:
             with open(os.path.dirname(os.path.abspath(__file__)) + "/receivers") as file:
@@ -38,6 +42,7 @@ class TrayMenu:
         file.close()
         print("vola" + str(self.receivers))
         self.list_receivers = []
+        #Add receivers to menu
         for ind, i in enumerate(self.receivers):
             if ind != 0:
                 self.list_receivers.append(gtk.RadioMenuItem(str(i),group=self.list_receivers[ind-1]))
@@ -47,7 +52,6 @@ class TrayMenu:
             self.outputSub.append(i)
             i.connect('toggled', self.set_host, i.get_label())
         self.list_receivers[0].set_active(True)
-        #Create Loop to list displays/monitors
         self.receiver = self.receivers[0]
         self.monitors = self.get_displays()
         self.resolution = self.monitors[0][1]
@@ -57,13 +61,12 @@ class TrayMenu:
         displays = gtk.MenuItem("Select Display to Mirror")
         displays.set_submenu(self.displaysSub)
         self.list_displays = []
-        
+        #Create Loop to list displays/monitors in menu
         for ind, i in enumerate(self.monitors):
             if ind != 0:
                 self.list_displays.append(gtk.RadioMenuItem(str(i[0]),group=self.list_displays[ind-1]))
             else:
-                self.list_displays.append(gtk.RadioMenuItem(self.monitors[0][0]))
-                
+                self.list_displays.append(gtk.RadioMenuItem(self.monitors[0][0]))  
         for i in self.list_displays:
             self.displaysSub.append(i)
             i.connect('toggled', self.set_display, i.get_label())
@@ -81,17 +84,21 @@ class TrayMenu:
                 self.xoffset = i[2]
                 self.yoffset = i[3]
                 print("Selected Monitor: " + i[0] + " res: " + i[1] + " offset: " + i[2] + ":" + i[3])
-                
+
+    #set receiver to the one picked by the user     
     def set_host(self, but, name):
         self.outputSub = gtk.Menu()
         self.receiver = str(but.get_label())
         print("Receiver set to: " + but.get_label())
         
     def start(self, w):
-        if w.get_label() == 'Start Mirroring':
+        notify.init("mirrorMenu")
+        notify.Notification.new("Connecting", "Attempting to establish connection to " + self.receiver, None).show()
+        if w.get_label() == 'Start Mirroring': 
             w.set_label('Stop Mirroring')
             self.menu = gtk.Menu()
-            time.sleep(1)
+            #In case ffmpeg is still running taking up the port needed
+            #I know, doing both commands might be overkill
             os.system("fuser 8090/tcp && killall ffmpeg")
             try:
                 #Mute microphone
@@ -100,14 +107,17 @@ class TrayMenu:
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
                 time.sleep(1)
                 #Change laptop audio to headphones which are hopefully not plugged in.
+                #by doing so, the sound will not be echoing from playing on 2 devices(the receiver will be delayed)
                 subprocess.call("pacmd set-sink-port 0 analog-output-headphones &", shell=True)
                 #subprocess.call("amixer set Capture toggle", shell=True)
             except:
                 print("Cannot change pulse audio output to headphones")
+            #Start encoding and sending the stream to the receiver
+            time.sleep(1) #After checking port is open, it needs time to restart
             subprocess.call("ffmpeg -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(self.resolution) + " -i :0.0+" + str(self.xoffset) + "," + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(self.resolution).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
             try:
-                #Change Audio to record system sound
-                time.sleep(4)
+                #Attempt to automate correct audio settings so that it can be played on receiving device
+                time.sleep(3)#give ffmpeg time to start
                 audiostreams = subprocess.check_output("pactl list source-outputs |grep -o -P '(?<=Source Output #).*(?=.*)'", shell=True)
                 audiostreams = audiostreams.splitlines()
                 audiostream_names = subprocess.check_output("pactl list source-outputs |grep -o -P '(?<=application.name = \").*(?=\")'", shell=True)
@@ -121,9 +131,13 @@ class TrayMenu:
                 subprocess.call("pactl move-source-output " + str(stream) + " " + str(audiosource[0])[1:].strip('\'') + ".monitor", shell=True)
             except:
                 print("Failed changing pulse audio settings")
+            
+            '''if self.ready(self.receiver, 8090):
+                notify.Notification.new("Connection Failed", "Failed to establish connection to " + self.receiver + ". Is some one already connected? Please try again and if the problem persists then please contact your system administrator", None).show()
+                return'''
         else:
             try:
-                #Switch audio back to laptop speakers
+                #Switch audio back to laptop speakers and unmute microphone
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
                 subprocess.call("amixer set Capture cap &", shell=True)
             except:
@@ -135,25 +149,29 @@ class TrayMenu:
     
     def quit(self, w):
         try:
-            #Switch audio back to laptop speakers
+            #Switch audio back to laptop speakers and unmute microphone
             os.system("pacmd set-sink-port 0 analog-output-speaker")
             subprocess.call("amixer set Capture nocap &", shell=True)
         except:
             print("Failed to change pulse audio output back to speakers")
+        #kill ffmpeg incase user forgot to click "stop"
         subprocess.call("fuser 8090/tcp & killall ffmpeg &", shell=True)
         gtk.main_quit()
     
     def get_displays(self):
         displays = []
         try:
+            #Attempt to get names of displays
             command = subprocess.check_output("sh " + os.path.dirname(os.path.abspath(__file__)) + "/monitors.sh", shell=True)
-            command2 = subprocess.check_output("xrandr --verbose |grep -o -P '(?<=connected ).*(?= \(\d.*)'|grep -o -P '\d\d\d\dx.*'", shell=True)
+            #Get resolutions
+            command2 = subprocess.check_output("xrandr --verbose |grep -o -P '(?<=connected ).*(?= \(\d.*)'|grep -o -P '\d\d.*x.*'", shell=True)
             data = command.splitlines()
             data2 = command2.splitlines()
             h = len(data)
             for i in range(h):
                 l = []
                 if "\\" in str(data[i]):
+                    #If there was a failure to get display names, give displays generic names
                     l.append("Display " + str(i+1))
                 else:
                     l.append(str(data[i])[2:].strip('\''))
@@ -167,11 +185,22 @@ class TrayMenu:
             print("cannot get width and height")
         return displays
     
-    def divisor(x, y):
+    def divisor(self, x, y):
         #To calculate aspect ratio
         if y == 0:
             return x
         return divisor(y, x % y)
+    
+    def ready(self, host, port):
+        check = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            check.connect((host, int(port)))
+            check.shutdown(2)
+            check.close()
+            time.sleep(1)
+            return False
+        except:
+            return True
 
 def main():
     gtk.main()
