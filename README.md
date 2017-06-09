@@ -21,6 +21,7 @@ Google chromes screen mirroring feature is very good when used with a receiver s
 <ul><li>Automate audio settings(This is partially done, you might need to add or modify some code to automate audio settings for some machines)</li>
 <li>Add option mirror selected application</li>
 <li>Verify receiver is online and ready before attempting to connect</li>
+<li>Add option to freeze/pause at current frame on the receiver so the user can continue working on their computer</p>
 <li>Tidy up code</li></ul>
 
 <b>Other</b>
