@@ -134,7 +134,7 @@ class TrayMenu:
                 print("Failed changing pulse audio settings")
             #Check if connection was is established
             try:
-                output = subprocess.check_output("netstat -napt 2>/dev/null|grep '8090'", shell=True)
+                output = subprocess.check_output("netstat -napt 2>/dev/null|grep '8090 * ESTABLISHED'", shell=True)
             except:
                 notify.Notification.new("Connection Failed", "Failed to establish connection to " + self.receiver + ". Is some one already connected? Please try again and if the problem persists then please contact your system administrator", None).show()
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
