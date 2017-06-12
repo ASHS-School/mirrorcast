@@ -152,7 +152,7 @@ class TrayMenu:
                 subprocess.call("amixer set Capture cap &", shell=True)
             except:
                 print("Cannot change pulse audio output back to speakers")
-            subprocess.call("fuser 8090/tcp & killall ffmpeg &", shell=True)
+            subprocess.call("fuser 8090/tcp & killall ffmpeg", shell=True)
             w.set_label('Start Mirroring')
             self.menu = gtk.Menu()
             time.sleep(1)
@@ -165,8 +165,9 @@ class TrayMenu:
         except:
             print("Failed to change pulse audio output back to speakers")
         #kill ffmpeg incase user forgot to click "stop"
-        subprocess.call("fuser 8090/tcp & killall ffmpeg &", shell=True)
+        subprocess.call("fuser 8090/tcp & killall ffmpeg", shell=True)
         gtk.main_quit()
+        
     
     def get_displays(self):
         displays = []
@@ -219,3 +220,4 @@ def main():
 if __name__ == "__main__":
     indicator = TrayMenu()
     main()
+    
