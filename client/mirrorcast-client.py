@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.1b'''
+Mirrorcast Version 0.2b'''
 import os
 import time
 import subprocess
@@ -92,10 +92,11 @@ class TrayMenu:
         print("Receiver set to: " + but.get_label())
         
     def start(self, w):
-        notify.init("mirrorMenu")
-        notify.Notification.new("Connecting", "Attempting to establish connection to " + self.receiver, None).show()
-        if w.get_label() == 'Start Mirroring': 
-            w.set_label('Stop Mirroring')
+ 
+        if w.get_label() == 'Start Mirroring':
+            notify.init("mirrorMenu")
+            notify.Notification.new("Connecting", "Attempting to establish connection to " + self.receiver, None).show()
+            w.set_label('Connecting...')
             self.menu = gtk.Menu()
             #In case ffmpeg is still running taking up the port needed
             #I know, doing both commands might be overkill
@@ -131,10 +132,19 @@ class TrayMenu:
                 subprocess.call("pactl move-source-output " + str(stream) + " " + str(audiosource[0])[1:].strip('\'') + ".monitor", shell=True)
             except:
                 print("Failed changing pulse audio settings")
-            
-            '''if self.ready(self.receiver, 8090):
+            #Check if connection was is established
+            try:
+                output = subprocess.check_output("netstat -napt 2>/dev/null|grep '8090'", shell=True)
+            except:
                 notify.Notification.new("Connection Failed", "Failed to establish connection to " + self.receiver + ". Is some one already connected? Please try again and if the problem persists then please contact your system administrator", None).show()
-                return'''
+                subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
+                subprocess.call("amixer set Capture cap &", shell=True)
+                w.set_label('Start Mirroring')
+                self.menu = gtk.Menu()
+                return
+            notify.Notification.new("Connection Established", "Connection to " + self.receiver + " established.", None).show()
+            w.set_label('Stop Mirroring')
+            self.menu = gtk.Menu()
         else:
             try:
                 #Switch audio back to laptop speakers and unmute microphone
@@ -195,7 +205,7 @@ class TrayMenu:
         check = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             check.connect((host, int(port)))
-            check.shutdown(2)
+            check.shutdown(1)
             check.close()
             time.sleep(1)
             return False
