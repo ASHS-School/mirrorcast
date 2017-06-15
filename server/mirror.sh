@@ -26,8 +26,10 @@ function active {
 	do
 		sleep 1
 		connection=$(netstat -tnpa 2>/dev/null| grep ":8090 .*ESTABLISHED")
+		client=$(netstat -tnpa 2>/dev/null|grep -o -P '(?<=8090).*(?=:)')
+		ping=$(ping -c 1 -W 1 $client |grep "1 received")
 		sleep 1
-		if [[ $connection = "" ]]
+		if [[ $connection = "" || $ping = "" ]]
 		then
 			echo "lost connection"
 			killall ffplay*
