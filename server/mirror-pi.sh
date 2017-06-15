@@ -7,7 +7,7 @@ function listen {
 	#You can change the position and dimesions of the output with --win "x1 y1 x2 y2"
 	#For example, you might want this for projectors that overshoot their screens
 	sleep 1
-	nohup omxplayer -o hdmi --lavfdopts probesize:5000 --timeout 0 -live tcp://0.0.0.0:8090?listen &
+	nohup omxplayer -o hdmi --lavfdopts probesize:5000 --timeout 0 -live tcp://0.0.0.0:8090?listen > /tmp/nohup.out &
 	while :
 	do
 		sleep 1
