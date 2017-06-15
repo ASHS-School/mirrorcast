@@ -115,7 +115,7 @@ class TrayMenu:
                 print("Cannot change pulse audio output to headphones")
             #Start encoding and sending the stream to the receiver
             time.sleep(1) #After checking port is open, it needs time to restart
-            subprocess.call("ffmpeg -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(self.resolution) + " -i :0.0+" + str(self.xoffset) + "," + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(self.resolution).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
+            subprocess.call("ffmpeg -loglevel warning -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(self.resolution) + " -i :0.0+" + str(self.xoffset) + "," + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(self.resolution).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
             try:
                 #Attempt to automate correct audio settings so that it can be played on receiving device
                 time.sleep(3)#give ffmpeg time to start
