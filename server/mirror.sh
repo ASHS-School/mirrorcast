@@ -4,7 +4,7 @@ function listen {
 	killall ffplay*
 	fuser -k 8090/tcp
 	sleep 1
-	nohup ffplay -fs -probesize 7000 -sync ext tcp://0.0.0.0:8090?listen &
+	nohup ffplay -fs -probesize 7000 -sync ext tcp://0.0.0.0:8090?listen > /tmp/nohup.out &
 	sleep 1
 	while :
 	do
