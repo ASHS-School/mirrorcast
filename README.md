@@ -18,7 +18,8 @@ Google chromes screen mirroring feature is very good when used with a receiver s
 <b>DEBIAN/UBUNTU APPLET</b>
 <ul><li>Automate audio settings(This is partially done, you might need to add or modify some code to automate audio settings for some machines)</li>
 <li>Add option mirror selected application</li>
-<li>Add option to freeze/pause at current frame on the receiver so the user can continue working on their computer</p>
+<li>Add option to freeze/pause at current frame on the receiver so the user can continue working on their computer</li>
+<li>Allow 4:3 aspect ratio's</li>
 <li>Tidy up code (Create classes for displays and receivers)</li></ul>
 
 <b>Other</b>
