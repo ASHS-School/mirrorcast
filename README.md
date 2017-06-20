@@ -19,18 +19,17 @@ Google chromes screen mirroring feature is very good when used with a receiver s
 <ul><li>Automate audio settings(This is partially done, you might need to add or modify some code to automate audio settings for some machines)</li>
 <li>Add option mirror selected application</li>
 <li>Add option to freeze/pause at current frame on the receiver so the user can continue working on their computer</p>
-<li>Tidy up code</li></ul>
+<li>Tidy up code (Create classes for displays and receivers)</li></ul>
 
 <b>Other</b>
 <ul><li>Create Windows client application</li>
 <li>Create MacOs client application</li>
 <li>Create Android client application</li></ul>
 
-
 <h2>How to use</h2>
 
 <p>Currently this is a rough prototype that I have only tested using my laptop and raspberry pi as the receiver. The applet will add a option to start mirroring the selected display to the selected receiver.</p>
 
-<p>If you are using a raspberry pi as a receiver you need omxplayer and cec-utils installed. Once omxplayer is installed, you just need to run mirror-pi.sh.</br> If your receiver is not a raspberry pi then you can run the other script in the server folder, for that you will need to install ffplay which is included with ffmpeg.<br/>On the device you wish to mirror you will need python3 and ffmpeg installed, the python script will add a applet to your toolbar which gives you the option to select a receiver and a display to you wish to mirror. You need to add either the hostnames or the ip addresses of your receivers to the receivers file.(this python script is for debian and ubuntu based systems)</p>
+<p>If you are using a raspberry pi as a receiver you will need omxplayer and cec-utils installed. Once omxplayer is installed, you just need to run mirror-pi.sh.</br> If your receiver is not a raspberry pi then you can run the other script in the server folder, for that you will need to install ffplay which is included with ffmpeg.<br/>On the device you wish to mirror you will need python3 and ffmpeg installed, the python script will add a applet to your toolbar which gives you the option to select a receiver and a display to you wish to mirror. You need to add either the hostnames or the ip addresses of your receivers to the receivers file.(this python script is for debian and ubuntu based systems)</p>
 
-<p>NOTE: This is a work in progress, the code is rushed, messy and not at all elegant at this stage. </p>
+<p>NOTE: This is a work in progress, the code is rushed, messy and not at all elegant at this stage. I will do things such as create classes for displays and receivers to make it more elegant. </p>
