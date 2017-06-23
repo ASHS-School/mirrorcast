@@ -1,2 +1,7 @@
-pi-livingroom
-pi-projector
+host,aspect
+none,none
+right-4c,wide
+right-4d,standard
+right-5d,standard
+pi-livingroom,wide
+192.168.1.110,wide
