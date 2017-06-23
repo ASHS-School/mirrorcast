@@ -1,13 +1,10 @@
 '''Rough applet for Debian/Ubuntu Systems
 Mirrorcast Version 0.2b'''
-import os
-import time
-import subprocess
-import gi
-import re
-import socket
+import socket, csv, re, gi, subprocess, time, os
 gi.require_version('AppIndicator3', '0.1')
 gi.require_version('Gtk', '3.0')
+gi.require_version('Gtk', '3.0')
+gi.require_version('Notify', '0.7')
 from gi.repository import Gtk as gtk
 from gi.repository import AppIndicator3 as appindicator
 from gi.repository import Notify as notify
@@ -34,25 +31,28 @@ class TrayMenu:
         #load list of receivers from file
         self.receivers = []
         try:
-            with open(os.path.dirname(os.path.abspath(__file__)) + "/receivers") as file:
-                self.receivers = file.read().splitlines()
+            with open(os.path.dirname(os.path.abspath(__file__)) + "/receivers") as csvfile:
+                file = csv.DictReader(csvfile)
+                for line in file:
+                    self.receivers.append(line)
         except:
             print("failed to load host names")
             exit(0)
-        file.close()
-        print("vola" + str(self.receivers))
+        print()
+        csvfile.close()
         self.list_receivers = []
         #Add receivers to menu
         for ind, i in enumerate(self.receivers):
             if ind != 0:
-                self.list_receivers.append(gtk.RadioMenuItem(str(i),group=self.list_receivers[ind-1]))
+                self.list_receivers.append(gtk.RadioMenuItem(str(i['host']),group=self.list_receivers[ind-1]))
             else:
-                self.list_receivers.append(gtk.RadioMenuItem(self.receivers[0]))
+                self.list_receivers.append(gtk.RadioMenuItem(self.receivers[0]['host']))
         for i in self.list_receivers:
             self.outputSub.append(i)
             i.connect('toggled', self.set_host, i.get_label())
         self.list_receivers[0].set_active(True)
-        self.receiver = self.receivers[0]
+        self.receiver = self.receivers[0]['host']
+        self.aspect = self.receivers[0]['aspect']
         self.monitors = self.get_displays()
         self.resolution = self.monitors[0][1]
         self.xoffset = self.monitors[0][2]
@@ -61,7 +61,7 @@ class TrayMenu:
         displays = gtk.MenuItem("Select Display to Mirror")
         displays.set_submenu(self.displaysSub)
         self.list_displays = []
-        #Create Loop to list displays/monitors in menu
+        #Add displays/monitors to menu
         for ind, i in enumerate(self.monitors):
             if ind != 0:
                 self.list_displays.append(gtk.RadioMenuItem(str(i[0]),group=self.list_displays[ind-1]))
@@ -71,6 +71,7 @@ class TrayMenu:
             self.displaysSub.append(i)
             i.connect('toggled', self.set_display, i.get_label())
         self.list_displays[0].set_active(True)
+        self.type = self.monitors[0][4]
         self.menu.append(output)
         self.menu.append(displays)
         self.menu.show_all()
@@ -83,20 +84,36 @@ class TrayMenu:
                 self.resolution = i[1]
                 self.xoffset = i[2]
                 self.yoffset = i[3]
+                self.type = i[4]
                 print("Selected Monitor: " + i[0] + " res: " + i[1] + " offset: " + i[2] + ":" + i[3])
 
     #set receiver to the one picked by the user     
     def set_host(self, but, name):
         self.outputSub = gtk.Menu()
         self.receiver = str(but.get_label())
+        for i in self.receivers:
+            if i['host'] == self.receiver:
+                self.aspect = i['aspect']
+                break
         print("Receiver set to: " + but.get_label())
         
     def start(self, w):
- 
         if w.get_label() == 'Start Mirroring':
+            res = self.resolution
+            #woffset = 0
+            #If receiver is set to display 4:3 and the client is 16:9 then change screen resoltion to 1024x768
+            if (self.aspect == "wide" or self.aspect == "16:9" or self.aspect == "16:10") and self.get_ratio(self.resolution) == "16:9":
+                self.aspect = "16:9"     
+            else:
+                self.aspect = "4:3"
+                if self.get_ratio(self.resolution) != "4:3":
+                    res = "1024x768"
+                    #w1 = res.split('x')
+                    #w2 = self.resolution.split('x')
+                    #woffset = int(w2[0]) - int(w1[0])
+                    subprocess.call("xrandr --output " + self.type + " --mode 1024x768", shell=True)
             notify.init("mirrorMenu")
             notify.Notification.new("Connecting", "Attempting to establish connection to " + self.receiver, None).show()
-            w.set_label('Connecting...')
             self.menu = gtk.Menu()
             #In case ffmpeg is still running taking up the port needed
             #I know, doing both commands might be overkill
@@ -115,7 +132,7 @@ class TrayMenu:
                 print("Cannot change pulse audio output to headphones")
             #Start encoding and sending the stream to the receiver
             time.sleep(1) #After checking port is open, it needs time to restart
-            subprocess.call("ffmpeg -loglevel warning -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(self.resolution) + " -i :0.0+" + str(self.xoffset) + "," + str(self.yoffset) + " -aspect 16:9 -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(self.resolution).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
+            subprocess.call("ffmpeg -loglevel warning -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(res) + " -i :0.0+" + str(int(self.xoffset)) + "," + str(self.yoffset) + " -aspect " + self.aspect + " -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(res).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
             try:
                 #Attempt to automate correct audio settings so that it can be played on receiving device
                 time.sleep(3)#give ffmpeg time to start
@@ -136,10 +153,14 @@ class TrayMenu:
             try:
                 output = subprocess.check_output("netstat -napt 2>/dev/null|grep '8090 * ESTABLISHED'", shell=True)
             except:
+                #IIF connection fails, undo changes.
                 notify.Notification.new("Connection Failed", "Failed to establish connection to " + self.receiver + ". Is some one already connected? Please try again and if the problem persists then please contact your system administrator", None).show()
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
                 subprocess.call("amixer set Capture cap &", shell=True)
                 w.set_label('Start Mirroring')
+                if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
+                    subprocess.call("xrandr --output " + self.type + " --mode " + self.resolution + " &", shell=True)
+                    #self.aspect = self.get_ratio(self.resolution)
                 self.menu = gtk.Menu()
                 return
             notify.Notification.new("Connection Established", "Connection to " + self.receiver + " established.", None).show()
@@ -150,6 +171,9 @@ class TrayMenu:
                 #Switch audio back to laptop speakers and unmute microphone
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
                 subprocess.call("amixer set Capture cap &", shell=True)
+                if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
+                    subprocess.call("xrandr --output " + self.type + " --mode " + self.resolution + " &", shell=True)
+                    #self.aspect = self.get_ratio(self.resolution)
             except:
                 print("Cannot change pulse audio output back to speakers")
             subprocess.call("fuser 8090/tcp & killall ffmpeg", shell=True)
@@ -162,6 +186,9 @@ class TrayMenu:
             #Switch audio back to laptop speakers and unmute microphone
             os.system("pacmd set-sink-port 0 analog-output-speaker")
             subprocess.call("amixer set Capture nocap &", shell=True)
+            if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
+                subprocess.call("xrandr --output " + self.type + " --mode " + self.resolution + " &", shell=True)
+                #self.aspect = self.get_ratio(self.resolution)
         except:
             print("Failed to change pulse audio output back to speakers")
         #kill ffmpeg incase user forgot to click "stop"
@@ -176,11 +203,14 @@ class TrayMenu:
             command = subprocess.check_output("sh " + os.path.dirname(os.path.abspath(__file__)) + "/monitors.sh", shell=True)
             #Get resolutions
             command2 = subprocess.check_output("xrandr --verbose |grep -o -P '(?<=connected ).*(?= \(\d.*)'|grep -o -P '\d\d.*x.*'", shell=True)
+            ident = subprocess.check_output("xrandr -q|grep -o -P '.*(?= co.*\dx\d.*)'", shell=True)
             data = command.splitlines()
             data2 = command2.splitlines()
+            data3 = ident.splitlines()
             h = len(data)
             for i in range(h):
                 l = []
+                print("it " + str(i))
                 if "\\" in str(data[i]):
                     #If there was a failure to get display names, give displays generic names
                     l.append("Display " + str(i+1))
@@ -190,17 +220,42 @@ class TrayMenu:
                 l.append(setting.group(1))
                 l.append(setting.group(2))
                 l.append(setting.group(3).strip('\''))
+                l.append(str(data3[i]).strip(("b\'")))
+                print(l)
                 displays.append(l)
             print(displays)        
         except:
-            print("cannot get width and height")
+            print("something went wrong getting monitor")
         return displays
     
     def divisor(self, x, y):
         #To calculate aspect ratio
-        if y == 0:
-            return x
-        return divisor(y, x % y)
+        if int(y) == 0:
+            return int(x)
+        return self.divisor(y, int(x) % int(y))
+    
+    def get_ratio(self, res):
+        res = res.split('x')
+        x = res[0]
+        y = res[1]
+        ratios = ['5:4', '4:3', '3:2', '8:5', '5:3', '16:9', '17:9', '16:10']
+        gcd = self.divisor(x, y)
+        ratio = str(int(x) / gcd) + ':' + str(int(y) / gcd)
+        normalised = float(x) / float(y)
+        if ratio not in ratios:
+            error = 999
+            index = -1
+            for i in range(len(ratios)):
+                ratio1 = ratios[i].split(':')
+                w = ratio1[0]
+                h = ratio1[1]
+                known = int(w) / int(h)
+                dist = abs(normalised - known)
+                if dist < error:
+                    index = i
+                    error = dist
+            ratio = ratios[index]
+        return ratio
     
     def ready(self, host, port):
         check = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
