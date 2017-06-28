@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#Note, a much better approach than using this script is to use set omxplayer up as a daemon using a program like supervisor
+
 function listen {
 	fuser -k 8090/tcp
 	killall omxplayer*
@@ -7,7 +9,7 @@ function listen {
 	#You can change the position and dimesions of the output with --win "x1 y1 x2 y2"
 	#For example, you might want this for projectors that overshoot their screens
 	sleep 1
-	nohup omxplayer -o hdmi --lavfdopts probesize:5000 --timeout 0 -live tcp://0.0.0.0:8090?listen > /tmp/nohup.out &
+	nohup omxplayer -o hdmi --lavfdopts probesize:5000 --timeout 10 -live tcp://0.0.0.0:8090?listen > /tmp/nohup.out &
 	while :
 	do
 		sleep 1
