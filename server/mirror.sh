@@ -1,6 +1,7 @@
 #!/bin/bash
 
-#Note, a better approach than using this script is to use set ffplay up as a daemon using a program like supervisor
+#Note, a better approach than using this script is to instead set ffplay up as a daemon using a program like supervisor
+
 function listen {
 	killall ffplay*
 	fuser -k 8090/tcp
