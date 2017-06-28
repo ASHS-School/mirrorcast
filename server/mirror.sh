@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#Note, a better approach than using this script is to use set ffplay up as a daemon using a program like supervisor
 function listen {
 	killall ffplay*
 	fuser -k 8090/tcp
@@ -21,7 +22,7 @@ function listen {
 }
 
 function active {
-	sleep 5
+	sleep 2
 	while :
 	do
 		sleep 1
