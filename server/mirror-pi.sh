@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#Note, a much better approach than using this script is to use set omxplayer up as a daemon using a program like supervisor
+#Note, a much better approach than using this script is to instead set omxplayer up as a daemon using a program like supervisor
 
 function listen {
 	fuser -k 8090/tcp
