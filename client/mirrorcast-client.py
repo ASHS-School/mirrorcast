@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.2b'''
+Mirrorcast Version 0.2.2b'''
 import socket, csv, re, gi, subprocess, time, os
 gi.require_version('AppIndicator3', '0.1')
 gi.require_version('Gtk', '3.0')
@@ -129,17 +129,19 @@ class TrayMenu:
                 subprocess.call("pacmd set-sink-port 0 analog-output-headphones &", shell=True)
                 #subprocess.call("amixer set Capture toggle", shell=True)
             except:
-                print("Cannot change pulse audio output to headphones")
+                print("Cannot change audio output to headphones")
             #Start encoding and sending the stream to the receiver
             time.sleep(1) #After checking port is open, it needs time to restart
-            subprocess.call("ffmpeg -loglevel warning -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(res) + " -i :0.0+" + str(int(self.xoffset)) + "," + str(self.yoffset) + " -aspect " + self.aspect + " -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(res).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
+            display = subprocess.check_output("echo $DISPLAY", shell=True)#get display of current user
+            subprocess.call("ffmpeg -loglevel warning -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(res) + " -i " + str(display) + ".0+" + str(int(self.xoffset)) + "," + str(self.yoffset) + " -aspect " + self.aspect + " -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(res).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
             try:
-                #Attempt to automate correct audio settings so that it can be played on receiving device
+                #Attempt to automate correct audio settings so that audio can be played via receiving device
                 time.sleep(3)#give ffmpeg time to start
                 audiostreams = subprocess.check_output("pactl list source-outputs |grep -o -P '(?<=Source Output #).*(?=.*)'", shell=True)
                 audiostreams = audiostreams.splitlines()
                 audiostream_names = subprocess.check_output("pactl list source-outputs |grep -o -P '(?<=application.name = \").*(?=\")'", shell=True)
                 audiostream_names = audiostream_names.splitlines()
+                #Search for ffmpeg audio stream
                 for i in range(len(audiostreams)):
                     if "Lav" in str(audiostream_names[i]):
                         stream = int(audiostreams[i])
@@ -148,12 +150,12 @@ class TrayMenu:
                 audiosource = audiosource.splitlines()
                 subprocess.call("pactl move-source-output " + str(stream) + " " + str(audiosource[0])[1:].strip('\'') + ".monitor", shell=True)
             except:
-                print("Failed changing pulse audio settings")
+                print("Something went wrong when attempting to change audio settings")
             #Check if connection was is established
             try:
                 output = subprocess.check_output("netstat -napt 2>/dev/null|grep '8090 * ESTABLISHED'", shell=True)
             except:
-                #IIF connection fails, undo changes.
+                #IIF connection fails, revert changes.
                 notify.Notification.new("Connection Failed", "Failed to establish connection to " + self.receiver + ". Is some one already connected? Please try again and if the problem persists then please contact your system administrator", None).show()
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
                 subprocess.call("amixer set Capture cap &", shell=True)
@@ -171,6 +173,7 @@ class TrayMenu:
                 #Switch audio back to laptop speakers and unmute microphone
                 subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
                 subprocess.call("amixer set Capture cap &", shell=True)
+                #change screen resolution back to default
                 if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
                     subprocess.call("xrandr --output " + self.type + " --mode " + self.resolution + " &", shell=True)
                     #self.aspect = self.get_ratio(self.resolution)
@@ -187,6 +190,7 @@ class TrayMenu:
             os.system("pacmd set-sink-port 0 analog-output-speaker")
             subprocess.call("amixer set Capture nocap &", shell=True)
             if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
+                #change screen resolution back to original
                 subprocess.call("xrandr --output " + self.type + " --mode " + self.resolution + " &", shell=True)
                 #self.aspect = self.get_ratio(self.resolution)
         except:
