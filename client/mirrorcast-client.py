@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.2.2b'''
+Mirrorcast Version 0.2.3b'''
 import socket, csv, re, gi, subprocess, time, os
 gi.require_version('AppIndicator3', '0.1')
 gi.require_version('Gtk', '3.0')
@@ -132,7 +132,7 @@ class TrayMenu:
                 print("Cannot change audio output to headphones")
             #Start encoding and sending the stream to the receiver
             time.sleep(1) #After checking port is open, it needs time to restart
-            display = subprocess.check_output("echo $DISPLAY", shell=True)#get display of current user
+            display = os.environ['DISPLAY']#get display of current user
             subprocess.call("ffmpeg -loglevel warning -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(res) + " -i " + str(display) + ".0+" + str(int(self.xoffset)) + "," + str(self.yoffset) + " -aspect " + self.aspect + " -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(res).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
             try:
                 #Attempt to automate correct audio settings so that audio can be played via receiving device
