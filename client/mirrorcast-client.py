@@ -99,6 +99,10 @@ class TrayMenu:
         
     def start(self, w):
         if w.get_label() == 'Start Mirroring':
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((self.receiver, 8091))
+            sock.send("on".encode('ascii'))
+            sock.close()
             res = self.resolution
             #woffset = 0
             #If receiver is set to display 4:3 and the client is 16:9 then change screen resoltion to 1024x768
@@ -133,7 +137,7 @@ class TrayMenu:
             #Start encoding and sending the stream to the receiver
             time.sleep(1) #After checking port is open, it needs time to restart
             display = os.environ['DISPLAY']#get display of current user
-            subprocess.call("ffmpeg -loglevel warning -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(res) + " -i " + str(display) + ".0+" + str(int(self.xoffset)) + "," + str(self.yoffset) + " -aspect " + self.aspect + " -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(res).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
+            subprocess.call("ffmpeg -loglevel warning -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(res) + " -i " + str(display) + "+" + str(int(self.xoffset)) + "," + str(self.yoffset) + " -aspect " + self.aspect + " -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(res).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
             try:
                 #Attempt to automate correct audio settings so that audio can be played via receiving device
                 time.sleep(3)#give ffmpeg time to start
