@@ -39,7 +39,7 @@ Google chromes screen mirroring feature is very good when used with a receiver s
 <li>add/edit the hostnames or ip addresses of your receivers to /opt/mirrorcast/receivers (if the receiver is widescreen then put 'wide' as the aspect)</li></ul></p>
 
 <p>On the raspberry pi receiver<ul>
-<li>install supervisor and set the following command up as a deamon</li>
+<li>install supervisor and omxplayer and set the following command up as a deamon</li>
 <li>nohup omxplayer -o hdmi --lavfdopts probesize:5000 --timeout 10 -live tcp://0.0.0.0:8090?listen > /tmp/nohup.out &</li>
 </ul></p>
 
