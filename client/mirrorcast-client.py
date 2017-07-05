@@ -99,10 +99,13 @@ class TrayMenu:
         
     def start(self, w):
         if w.get_label() == 'Start Mirroring':
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((self.receiver, 8091))
-            sock.send("on".encode('ascii'))
-            sock.close()
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.connect((self.receiver, 8091))
+                sock.send("on".encode('ascii'))
+                sock.close()
+            except:
+                print("Problem with sockets")
             res = self.resolution
             #woffset = 0
             #If receiver is set to display 4:3 and the client is 16:9 then change screen resoltion to 1024x768
