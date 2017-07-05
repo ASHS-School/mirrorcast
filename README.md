@@ -1,7 +1,7 @@
 <h1>Mirrorcast - Open Source Solution for Screen Mirroring</h1>
 
 <p>The idea is to replicate what chromecast can do in regards to screen mirroring. 
-Google chromes screen mirroring feature is very good when used with a receiver such as chromecast but this solution is proprietary and audio does not work for desktop screening on some operating systems.</p>
+Google chromes screen mirroring feature is very good when used with a receiver such as chromecast but this solution is proprietary and audio does not work for desktop mirroring on some operating systems.</p>
 
 <p>This application is ideal for wireless projection, no more cables, just send your desktop over the network to a receiver</P>
 
