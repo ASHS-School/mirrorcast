@@ -38,7 +38,6 @@ class TrayMenu:
         except:
             print("failed to load host names")
             exit(0)
-        print()
         csvfile.close()
         self.list_receivers = []
         #Add receivers to menu
@@ -76,6 +75,11 @@ class TrayMenu:
         self.menu.append(displays)
         self.menu.show_all()
         self.indicator.set_menu(self.menu)
+        try:
+            self.audioDev = subprocess.check_output("pacmd list-sinks | grep -o -P '(?<=name: \<).*.analog-stereo(?=>)'", shell=True).decode("utf-8")
+        except:
+            print("Failed to detect audio device, defaulting to sink port 0")
+            self.audioDev = "0"
 
     def set_display(self, but, nam):    
         self.displaysSub = gtk.Menu()
@@ -98,6 +102,7 @@ class TrayMenu:
         print("Receiver set to: " + but.get_label())
         
     def start(self, w):
+        print("Detected Audio Device: " + str(self.audioDev))
         if w.get_label() == 'Start Mirroring':
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -129,11 +134,11 @@ class TrayMenu:
                 #Mute microphone
                 subprocess.call("pulseaudio &", shell=True)
                 subprocess.call("amixer set Capture nocap &", shell=True)
-                subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
+                subprocess.call("pacmd set-sink-port " + str(self.audioDev) + "  analog-output-speaker &", shell=True)
                 time.sleep(1)
                 #Change laptop audio to headphones which are hopefully not plugged in.
                 #by doing so, the sound will not be echoing from playing on 2 devices(the receiver will be delayed)
-                subprocess.call("pacmd set-sink-port 0 analog-output-headphones &", shell=True)
+                subprocess.call("pacmd set-sink-port " + str(self.audioDev) + "  analog-output-headphones &", shell=True)
                 #subprocess.call("amixer set Capture toggle", shell=True)
             except:
                 print("Cannot change audio output to headphones")
@@ -164,7 +169,7 @@ class TrayMenu:
             except:
                 #IIF connection fails, revert changes.
                 notify.Notification.new("Connection Failed", "Failed to establish connection to " + self.receiver + ". Is some one already connected? Please try again and if the problem persists then please contact your system administrator", None).show()
-                subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
+                subprocess.call("pacmd set-sink-port " + str(self.audioDev) + "  analog-output-speaker &", shell=True)
                 subprocess.call("amixer set Capture cap &", shell=True)
                 w.set_label('Start Mirroring')
                 if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
@@ -178,7 +183,7 @@ class TrayMenu:
         else:
             try:
                 #Switch audio back to laptop speakers and unmute microphone
-                subprocess.call("pacmd set-sink-port 0 analog-output-speaker &", shell=True)
+                subprocess.call("pacmd set-sink-port " + str(self.audioDev) + "  analog-output-speaker &", shell=True)
                 subprocess.call("amixer set Capture cap &", shell=True)
                 #change screen resolution back to default
                 if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
@@ -194,7 +199,7 @@ class TrayMenu:
     def quit(self, w):
         try:
             #Switch audio back to laptop speakers and unmute microphone
-            os.system("pacmd set-sink-port 0 analog-output-speaker")
+            os.system("pacmd set-sink-port " + str(self.audioDev) + "  analog-output-speaker")
             subprocess.call("amixer set Capture nocap &", shell=True)
             if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
                 #change screen resolution back to original
