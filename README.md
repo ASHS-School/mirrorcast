@@ -1,7 +1,7 @@
 <h1>Mirrorcast - Open Source Solution for Screen Mirroring</h1>
 
 <p>The idea is to replicate what chromecast can do in regards to screen mirroring. 
-Google chromes screen mirroring feature is very good when used with a receiver such as chromecast but this solution is proprietary.</p>
+Google chromes screen mirroring feature is very good when used with a receiver such as chromecast but this solution is proprietary and audio does not work for desktop screening on some operating systems.</p>
 
 <p>This application is ideal for wireless projection, no more cables, just send your desktop over the network to a receiver</P>
 
@@ -16,10 +16,9 @@ Google chromes screen mirroring feature is very good when used with a receiver s
 <h2>TO DO:</h2>
 
 <b>DEBIAN/UBUNTU APPLET</b>
-<ul><li>Automate audio settings(This is partially done, you might need to add or modify some code to automate audio settings for some machines)</li>
+<ul><li>Automate audio settings(This is partially done, you might need to modify some code to automate audio settings for some computers)</li>
 <li>Add option mirror selected application</li>
 <li>Add option to freeze/pause at current frame on the receiver so the user can continue working on their computer</li>
-<li>Allow 4:3 aspect ratio's</li>
 <li>Tidy up code (Create classes for displays and receivers)</li></ul>
 
 <b>Other</b>
@@ -29,8 +28,21 @@ Google chromes screen mirroring feature is very good when used with a receiver s
 
 <h2>How to use</h2>
 
-<p>Currently this is a rough prototype that I have only tested using my laptop and raspberry pi as the receiver. The applet will add a option to start mirroring the selected display to the selected receiver.</p>
+<p>Currently this is a rough prototype that I have only tested using my laptop running Ubuntu 16.04 and raspberry pi as the receiver. The applet will add a option to start mirroring the selected display to the selected receiver.</p>
 
-<p>If you are using a raspberry pi as a receiver you will need omxplayer and cec-utils installed. Once omxplayer is installed, you just need to run mirror-pi.sh.</br> If your receiver is not a raspberry pi then you can run the other script in the server folder, for that you will need to install ffplay which is included with ffmpeg.<br/>On the device you wish to mirror you will need python3 and ffmpeg installed, the python script will add a applet to your toolbar which gives you the option to select a receiver and a display to you wish to mirror. You need to add either the hostnames or the ip addresses of your receivers to the receivers file.(this python script is for debian and ubuntu based systems)</p>
+<p>To install the mirrorcast client on debian/ubuntu<ul>
+<li>download the latest mirrorcast deb file from releases</li>
+<li>Install it</li>
+<li>sudo dpkg -i mirrorcast_version_number.deb</li>
+<li>if you are missing dependencies install them with</li>
+<li>sudo apt-get update && sudo apt-get -f install</li>
+<li>add/edit the hostnames or ip addresses of your receivers to /opt/mirrorcast/receivers (if the receiver is widescreen then put 'wide' as the aspect)</li></ul></p>
+
+<p>On the raspberry pi receiver<ul>
+<li>install supervisor and set the following command up as a deamon</li>
+<li>nohup omxplayer -o hdmi --lavfdopts probesize:5000 --timeout 10 -live tcp://0.0.0.0:8090?listen > /tmp/nohup.out &</li>
+</ul></p>
+
+<p>To start mirroring your desktop start mirrorcast, it will add an applet to your toolbar, first select the display you want to mirror, then select your receiver, then click 'start mirroring'</p>
 
 <p>NOTE: This is a work in progress, the code is rushed, messy and not at all elegant at this stage. I will do things such as create classes for displays and receivers to make it more elegant. </p>
