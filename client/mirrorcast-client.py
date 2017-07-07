@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.2.3b'''
+Mirrorcast Version 0.2.4b'''
 import socket, csv, re, gi, subprocess, time, os
 gi.require_version('AppIndicator3', '0.1')
 gi.require_version('Gtk', '3.0')
@@ -40,12 +40,32 @@ class TrayMenu:
             exit(0)
         csvfile.close()
         self.list_receivers = []
+        #sorting
+        self.sortedMenu = []
+        sortSub = []
+        subitems = []
+        sortInd = 0
+        sortInd2 = 0
         #Add receivers to menu
+        self.list_receivers.append(gtk.RadioMenuItem('None'))
         for ind, i in enumerate(self.receivers):
-            if ind != 0:
-                self.list_receivers.append(gtk.RadioMenuItem(str(i['host']),group=self.list_receivers[ind-1]))
-            else:
-                self.list_receivers.append(gtk.RadioMenuItem(self.receivers[0]['host']))
+            #allow user to sort their receivers into sublists
+            if i['aspect'] == "sub":
+                self.sortedMenu.append(gtk.Menu())
+                sortSub.append(gtk.MenuItem(i['host']))
+                sortSub[sortInd].set_submenu(self.sortedMenu[sortInd])
+                self.outputSub.append(sortSub[sortInd])
+                sortInd = sortInd + 1
+            elif sortInd > 0:
+                try:
+                    subitems.append(gtk.RadioMenuItem(str(i['host']),group=self.subitems[sortInd2-1]))
+                except:
+                    subitems.append(gtk.RadioMenuItem(str(i['host']),group=self.list_receivers[0]))
+                subitems[sortInd2].connect('toggled', self.set_host, subitems[sortInd2].get_label())
+                self.sortedMenu[sortInd-1].append(subitems[sortInd2])
+                sortInd2 = sortInd2 + 1
+            else:    
+                self.list_receivers.append(gtk.RadioMenuItem(str(i['host']),group=self.list_receivers[ind-1]))         
         for i in self.list_receivers:
             self.outputSub.append(i)
             i.connect('toggled', self.set_host, i.get_label())
@@ -82,7 +102,6 @@ class TrayMenu:
             self.audioDev = "0"
 
     def set_display(self, but, nam):    
-        self.displaysSub = gtk.Menu()
         for i in self.monitors:
             if but.get_label() == i[0] and but.get_active():
                 self.resolution = i[1]
@@ -92,14 +111,17 @@ class TrayMenu:
                 print("Selected Monitor: " + i[0] + " res: " + i[1] + " offset: " + i[2] + ":" + i[3])
 
     #set receiver to the one picked by the user     
-    def set_host(self, but, name):
-        self.outputSub = gtk.Menu()
+    def set_host(self, but, name):    
         self.receiver = str(but.get_label())
         for i in self.receivers:
-            if i['host'] == self.receiver:
+            if i['host'] == self.receiver and but.get_active():
                 self.aspect = i['aspect']
-                break
-        print("Receiver set to: " + but.get_label())
+                print("Receiver set to: " + i['host'])
+                return
+        if but.get_active():
+            self.receiver = "None"
+            print("Receiver set to: " + self.receiver)
+        
         
     def start(self, w):
         print("Detected Audio Device: " + str(self.audioDev))
@@ -226,7 +248,6 @@ class TrayMenu:
             h = len(data)
             for i in range(h):
                 l = []
-                print("it " + str(i))
                 if "\\" in str(data[i]):
                     #If there was a failure to get display names, give displays generic names
                     l.append("Display " + str(i+1))
