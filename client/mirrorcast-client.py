@@ -96,7 +96,8 @@ class TrayMenu:
         self.menu.show_all()
         self.indicator.set_menu(self.menu)
         try:
-            self.audioDev = subprocess.check_output("pacmd list-sinks | grep -o -P '(?<=name: \<).*.analog-stereo(?=>)'", shell=True).decode("utf-8")
+            subprocess.call("pulseaudio &", shell=True)
+            self.audioDev = subprocess.check_output("pacmd list-sinks | grep -o -P '(?<=name: \<).*.analog-stereo(?=>)'", shell=True).decode("utf-8").rstrip()
         except:
             print("Failed to detect audio device, defaulting to sink port 0")
             self.audioDev = "0"
@@ -156,18 +157,7 @@ class TrayMenu:
             #In case ffmpeg is still running taking up the port needed
             #I know, doing both commands might be overkill
             os.system("fuser 8090/tcp && killall ffmpeg")
-            try:
-                #Mute microphone
-                subprocess.call("pulseaudio &", shell=True)
-                subprocess.call("amixer set Capture nocap &", shell=True)
-                subprocess.call("pacmd set-sink-port " + str(self.audioDev) + "  analog-output-speaker &", shell=True)
-                time.sleep(1)
-                #Change laptop audio to headphones which are hopefully not plugged in.
-                #by doing so, the sound will not be echoing from playing on 2 devices(the receiver will be delayed)
-                subprocess.call("pacmd set-sink-port " + str(self.audioDev) + "  analog-output-headphones &", shell=True)
-                #subprocess.call("amixer set Capture toggle", shell=True)
-            except:
-                print("Cannot change audio output to headphones")
+            self.audio(True)
             #Start encoding and sending the stream to the receiver
             time.sleep(1) #After checking port is open, it needs time to restart
             display = os.environ['DISPLAY']#get display of current user
@@ -188,15 +178,14 @@ class TrayMenu:
                 audiosource = audiosource.splitlines()
                 subprocess.call("pactl move-source-output " + str(stream) + " " + str(audiosource[0])[1:].strip('\'') + ".monitor", shell=True)
             except:
-                print("Something went wrong when attempting to change audio settings")
+                print("Something went wrong when attempting to change ffmpeg audio to monitor desktop audio")
             #Check if connection was is established
             try:
                 output = subprocess.check_output("netstat -napt 2>/dev/null|grep '8090 * ESTABLISHED'", shell=True)
             except:
                 #IIF connection fails, revert changes.
                 notify.Notification.new("Connection Failed", "Failed to establish connection to " + self.receiver + ". Is some one already connected? Please try again and if the problem persists then please contact your system administrator", None).show()
-                subprocess.call("pacmd set-sink-port " + str(self.audioDev) + "  analog-output-speaker &", shell=True)
-                subprocess.call("amixer set Capture cap &", shell=True)
+                self.audio(False)
                 w.set_label('Start Mirroring')
                 if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
                     subprocess.call("xrandr --output " + self.type + " --mode " + self.resolution + " &", shell=True)
@@ -207,32 +196,21 @@ class TrayMenu:
             w.set_label('Stop Mirroring')
             self.menu = gtk.Menu()
         else:
-            try:
-                #Switch audio back to laptop speakers and unmute microphone
-                subprocess.call("pacmd set-sink-port " + str(self.audioDev) + "  analog-output-speaker &", shell=True)
-                subprocess.call("amixer set Capture cap &", shell=True)
-                #change screen resolution back to default
-                if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
-                    subprocess.call("xrandr --output " + self.type + " --mode " + self.resolution + " &", shell=True)
-                    #self.aspect = self.get_ratio(self.resolution)
-            except:
-                print("Cannot change pulse audio output back to speakers")
+            #Switch audio back to laptop speakers and unmute microphone
+            self.audio(False)
+            #change screen resolution back to default
+            if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
+                subprocess.call("xrandr --output " + self.type + " --mode " + self.resolution + " &", shell=True)
             subprocess.call("fuser 8090/tcp & killall ffmpeg", shell=True)
             w.set_label('Start Mirroring')
             self.menu = gtk.Menu()
             time.sleep(1)
     
     def quit(self, w):
-        try:
-            #Switch audio back to laptop speakers and unmute microphone
-            os.system("pacmd set-sink-port " + str(self.audioDev) + "  analog-output-speaker")
-            subprocess.call("amixer set Capture nocap &", shell=True)
-            if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
-                #change screen resolution back to original
-                subprocess.call("xrandr --output " + self.type + " --mode " + self.resolution + " &", shell=True)
-                #self.aspect = self.get_ratio(self.resolution)
-        except:
-            print("Failed to change pulse audio output back to speakers")
+        self.audio(False)
+        if self.aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
+            #change screen resolution back to original
+            subprocess.call("xrandr --output " + self.type + " --mode " + self.resolution + " &", shell=True)
         #kill ffmpeg incase user forgot to click "stop"
         subprocess.call("fuser 8090/tcp & killall ffmpeg", shell=True)
         gtk.main_quit()
@@ -274,6 +252,31 @@ class TrayMenu:
         if int(y) == 0:
             return int(x)
         return self.divisor(y, int(x) % int(y))
+    
+    def audio(self, toggle):
+        if toggle == True:
+            try:
+                #Mute microphone
+                subprocess.call("amixer set Capture nocap", shell=True)
+                time.sleep(1)
+                #Change laptop audio to headphones which are hopefully not plugged in.
+                #by doing so, the sound will not be echoing from playing on 2 devices(the receiver will be delayed)
+                subprocess.call("pacmd set-sink-port " + str(self.audioDev) + " analog-output-headphones &", shell=True)
+                #subprocess.call("pacmd set-sink-port " + str(self.audioDev) + " analog-output-lineout &", shell=True)
+                #subprocess.call("amixer set Capture toggle", shell=True)
+            except:
+                print("Cannot change audio output to headphones")
+            return
+        else:
+            try:
+                #subprocess.call("pacmd set-sink-port " + str(self.audioDev) + " analog-output-speaker &", shell=True)
+                subprocess.call("pacmd set-sink-port " + str(self.audioDev) + " analog-output-speaker &", shell=True)
+                time.sleep(1)
+                subprocess.call("amixer set Capture cap", shell=True)
+            except:
+                print("Failed to revert audio settings")
+            
+            
     
     def get_ratio(self, res):
         res = res.split('x')
