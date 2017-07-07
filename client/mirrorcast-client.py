@@ -70,7 +70,7 @@ class TrayMenu:
             self.outputSub.append(i)
             i.connect('toggled', self.set_host, i.get_label())
         self.list_receivers[0].set_active(True)
-        self.receiver = self.receivers[0]['host']
+        self.receiver = "None"
         self.aspect = self.receivers[0]['aspect']
         self.monitors = self.get_displays()
         self.resolution = self.monitors[0][1]
@@ -126,6 +126,10 @@ class TrayMenu:
     def start(self, w):
         print("Detected Audio Device: " + str(self.audioDev))
         if w.get_label() == 'Start Mirroring':
+            if self.receiver == "None":
+                notify.init("mirrorMenu")
+                notify.Notification.new("Error", "You did not select a receiver", None).show()
+                return
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect((self.receiver, 8091))
