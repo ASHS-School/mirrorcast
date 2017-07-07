@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.2.4b'''
+Mirrorcast Version 0.2.5b'''
 import socket, csv, re, gi, subprocess, time, os
 gi.require_version('AppIndicator3', '0.1')
 gi.require_version('Gtk', '3.0')
