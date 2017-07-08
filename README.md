@@ -19,9 +19,10 @@ Google chromes screen mirroring feature is very good when used with a receiver s
 <ul><li>Automate audio settings(This is partially done, you might need to modify some code to automate audio settings for some computers)</li>
 <li>Add option mirror selected application</li>
 <li>Add option to freeze/pause at current frame on the receiver so the user can continue working on their computer</li>
+<li>Instead of setting up ffplay or omxplayer as a daemon, use sockets to create a server application</li>
 <li>Tidy up code (Create classes for displays and receivers)</li></ul>
 
-<b>Other</b>
+<b>Other (If you want to help out with the following then that would be great)</b>
 <ul><li>Create Windows client application</li>
 <li>Create MacOs client application</li>
 <li>Create Android client application</li></ul>
