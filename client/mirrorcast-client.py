@@ -164,7 +164,7 @@ class TrayMenu:
             subprocess.call("ffmpeg -loglevel warning -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(res) + " -i " + str(display) + "+" + str(int(self.xoffset)) + "," + str(self.yoffset) + " -aspect " + self.aspect + " -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(res).replace('x', ':') + " -f mpegts tcp://" + self.receiver + ":8090 &", shell=True)
             try:
                 #Attempt to automate correct audio settings so that audio can be played via receiving device
-                time.sleep(3)#give ffmpeg time to start
+                time.sleep(10)#give ffmpeg time to start
                 audiostreams = subprocess.check_output("pactl list source-outputs |grep -o -P '(?<=Source Output #).*(?=.*)'", shell=True)
                 audiostreams = audiostreams.splitlines()
                 audiostream_names = subprocess.check_output("pactl list source-outputs |grep -o -P '(?<=application.name = \").*(?=\")'", shell=True)
