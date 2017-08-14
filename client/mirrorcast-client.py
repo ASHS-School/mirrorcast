@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.3b'''
+Mirrorcast Version 0.3.1b'''
 import socket, gi, subprocess, time, os, threading, logging, dbus
 from hosts import Hosts as hosts
 from displays import Displays
@@ -23,11 +23,12 @@ class TrayMenu:
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         self.state = "stopped"
         self.menu = gtk.Menu()
-        self.sleep = dbus_listen()
+        
         #Set up menu
         item_start= gtk.MenuItem('Start Mirroring') 
         item_start.connect('activate', self.start)
         self.menu.append(item_start)
+        self.sleep = dbus_listen(item_start)
         item_quit = gtk.MenuItem('Quit')
         item_quit.connect('activate', self.quit)
         self.menu.append(item_quit)
@@ -102,28 +103,26 @@ class TrayMenu:
                 notify.init("mirrorMenu")
                 notify.Notification.new("Error", "You did not select a receiver", None).show()
                 return
+            notify.Notification.new("Connecting to Receiver", "Attempting to establish connection to " + self.hosts.receiver, None).show()
+            logging.info("User is trying to connect to " + self.hosts.receiver)
             #If we cannot connect to the receiver
             if self.connect() == False:
                 notify.init("mirrorMenu")
                 notify.Notification.new("Connection Error", "Could not connect to" + self.hosts.receiver + ". please try again and if problem persists then please contact your system administrator.", None).show()
                 logging.warning("Failed to connect to " + self.hosts.receiver)
                 return
-            logging.info("User connected to " + self.hosts.receiver)
-            notify.Notification.new("Connecting to Receiver", "Attempting to establish connection to " + self.hosts.receiver, None).show()
-            self.menu = gtk.Menu()
-            self.start_casting()
-            w.set_label('Stop Mirroring')
-            self.menu = gtk.Menu()
             #Create and start loop that checks if receiver can still be reached
+            logging.info("User connected to " + self.hosts.receiver)
+            w.set_label("Stop Mirroring")
+            self.start_casting()
             connection=threading.Thread(target=self.alive,args=[w])
             connection.start()
-        else:
+        elif w.get_label() == 'Stop Mirroring':
+            self.state = "stopped"
             self.sound.audio(False)
             self.Display.display(False, self.hosts.aspect)
             subprocess.call("killall ffmpeg", shell=True)
             w.set_label('Start Mirroring')
-            self.state = "stopped"
-            self.menu = gtk.Menu()
             return
     
     def start_casting(self):
@@ -154,39 +153,40 @@ class TrayMenu:
             notify.Notification.new("Connection Established", "Connection to " + self.hosts.receiver + " established.", None).show()
             
     def alive(self,  w):
+        logging.info("Sending Alive Packets")
         timestamp = time.localtime()
         timeout = 10
-        retries = 40
+        retries = 1
         i=0
         command = "active," + socket.gethostname()
+            
         while True:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.connect((self.hosts.receiver, 8091))
+                sock.settimeout(5)
+                sock.connect((self.hosts.receiver, 8092))
+                #sock.settimeout(None)
                 #If the user's computer is going to sleep
-                if self.sleep.sleep == True:
-                    w.set_label('Start Mirroring')
-                    self.menu = gtk.Menu()
-                if self.state == "stopped":
+                if self.state == "stopped" or self.sleep.sleep == True:
+                    logging.info("User stopped casting")
                     command = "stop," + socket.gethostname()
                     sock.send(command.encode('ascii'))              
-                    sock.close()
-                    logging.info("User stopped casting")
+                    sock.close()   
                     return
                 sock.send(command.encode('ascii'))
                 status = sock.recv(1024)
                 if status.decode('ascii') == "ok":
                     timestamp = time.localtime()
-                time.sleep(1)
-                sock.close()            
+                sock.close()
             except:
-                time.sleep(1)
-                if (time.mktime(time.localtime()) - time.mktime(timestamp)) >= timeout and self.state != "stopped":
+                #time.sleep(1)
+                if (time.mktime(time.localtime()) - time.mktime(timestamp)) >= timeout and self.state != "stopped" and self.sleep.sleep != True:
                     i = i + 1
                     if i == 1:
                         logging.warning("Attempting to reconnect to " + self.hosts.receiver)
                         subprocess.call("killall ffmpeg", shell=True)
                         notify.Notification.new("Reconnecting", "Connection to " + self.hosts.receiver + " has been lost. Attempting to reconnect.", None).show()
+                        time.sleep(2)
                     if self.connect() == True:
                         logging.info("Reconnected to " + self.hosts.receiver)
                         self.start_casting()
@@ -194,7 +194,6 @@ class TrayMenu:
                     if i == retries:
                         self.state = "stopped"
                         w.set_label('Start Mirroring')
-                        self.menu = gtk.Menu()
                         notify.init("mirrorMenu")
                         notify.Notification.new("Connection Lost", "Connection to " + self.hosts.receiver + " timed out.", None).show()
                         logging.warning("Connection Lost: Connection to " + self.hosts.receiver + " timed out.")
@@ -206,17 +205,18 @@ class TrayMenu:
         self.Display.display(False, self.hosts.aspect)
         #kill ffmpeg incase user forgot to click "stop"
         subprocess.call("killall ffmpeg", shell=True)
-        time.sleep(1)
         gtk.main_quit()
                     
     def connect(self):
         command = "play," + socket.gethostname()
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((self.hosts.receiver, 8091))
+            sock.settimeout(5)
+            sock.connect((self.hosts.receiver, 8092))
+            sock.settimeout(None)
             sock.send(command.encode('ascii'))
             while True:
-                status = sock.recv(1024)
+                status = sock.recv(8024)
                 #if server returns busy then some one else is already using this receiver
                 if status.decode('ascii') == "busy":
                     notify.init("mirrorMenu")
@@ -228,30 +228,30 @@ class TrayMenu:
                 elif status.decode('ascii') == "ready":
                     logging.info("Server is ready")
                     break
-                time.sleep(1)
             sock.close()
         except:
             return False
         self.state = "casting"
         return True
 
-class dbus_listen():
+class dbus_listen(): 
     
     def handle_sleep(self, *args):
+        self.w.set_label('Start Mirroring')
         logging.info("User computer is going to sleep, killing ffmpeg")
         subprocess.call("killall ffmpeg", shell=True)
         self.sleep = True
-        self.state = "stopped"
     
-    def __init__(self):
+    def __init__(self, w):
         self.sleep = False
+        self.w = w
         DBusGMainLoop(set_as_default=True)     # integrate into gobject main loop
         bus = dbus.SystemBus()                 # connect to system wide dbus
         bus.add_signal_receiver(               # define the signal to listen to
         self.handle_sleep,                  # callback function
         'PrepareForSleep',                  # signal name
         'org.freedesktop.login1.Manager',   # interface
-        'org.freedesktop.login1'            # bus name
+        'org.freedesktop.login1',            # bus name
         )
         
 def main():
