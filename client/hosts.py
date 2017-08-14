@@ -18,7 +18,7 @@ class Hosts():
             logging.error("Failed to load host names")
             exit(0)
         csvfile.close()
-        
+        print("init")
         self.aspect = self.receivers[0]['aspect']
     
     #set receiver to the one picked by the user     
@@ -27,8 +27,9 @@ class Hosts():
         for i in self.receivers:
             if i['host'] == self.receiver and but.get_active():
                 self.aspect = i['aspect']
-                logging.info("Receiver set to: " + i['host'])
+                logging.info("Receiver set to: " + i['host'] + " Receivers aspect: " + self.aspect)
                 return
         if but.get_active():
             self.receiver = "None"
+            self.aspect = "16:9"
             logging.info("Receiver set to: " + self.receiver)
