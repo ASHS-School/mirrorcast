@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.5b'''
+Mirrorcast Version 0.5.1b'''
 import socket, gi, subprocess, time, os, threading, logging, dbus,logging.handlers
 from hosts import Hosts as hosts
 from displays import Displays
@@ -322,17 +322,7 @@ class TrayMenu:
                 mirror_logger.warning("Failed to connect to " + self.hosts.receiver)
                 return
             self.state = "stopped"
-            ui=threading.Thread(target=self.tubeui)
-            ui.start()
-            
-    
-    def tubeui(self):
-        root=Tk()
-        m=Tube(root)
-        m.receiver=self.hosts.receiver
-        root.title("Play Youtube URL")
-        root.mainloop()
-        mirror_logger.info("User connected to " + self.hosts.receiver + " to stream a youtube video (" + m.value + ")")
+            ui = tubeui(self.hosts.receiver)
 
         
     def connect(self, cmd):
@@ -362,7 +352,17 @@ class TrayMenu:
         self.state = "casting"
         return True
                             
-                            
+class tubeui():
+    def __init__(self, receiver):
+        self.root=Tk()
+        self.m=Tube(self.root)
+        self.m.receiver=receiver
+        self.root.title("Play Youtube URL")
+        self.root.protocol("WM_DELETE_WINDOW", self.on_exit)
+        self.root.mainloop()
+    def on_exit(self):
+        self.m.on_closing()
+        self.root.destroy()
 
 class dbus_listen(): 
     
