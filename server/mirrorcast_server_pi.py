@@ -101,7 +101,6 @@ def connection():
             #This condition is met if the user wants to play a DVD or Media file.
             elif command[0] == "media" and connected == "":
                 logging.info(connected + " is trying to stream a Media file or DVD")
-                subprocess.call("tvservice -p &",shell=True)
                 subprocess.call("fuser -k 8090/udp",shell=True)
                 subprocess.call("nohup omxplayer -o hdmi --lavfdopts probesize:8000 --timeout 60 --threshold 0 udp://0.0.0.0:8090?listen > /tmp/nohup.out &", shell=True)
                 time.sleep(1)
