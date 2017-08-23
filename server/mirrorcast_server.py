@@ -94,8 +94,9 @@ def timeout():
             ready = False
             subprocess.call("fuser -k 8090/udp &", shell=True)
             time.sleep(1)
-            connected = ""
+            connected = ""   
     return
+
     
 loop = threading.Thread(target=timeout)
 loop.start()
