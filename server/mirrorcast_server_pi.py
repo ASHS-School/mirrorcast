@@ -4,6 +4,7 @@
 #Please use python3 and not 2.7, 2.7 will cause problems
 
 import socket,subprocess,time,logging, threading
+from youtube_player import youtube
 
 logging.basicConfig(filename='/var/log/mirrorcast_server.log',level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
 logging.info("Started Server")
@@ -57,10 +58,52 @@ def connection():
                 connected = ""
                 subprocess.call("fuser -k 8090/udp &",shell=True)
                 subprocess.call("tvservice -p &",shell=True)
-                client.close()
+                
+            elif command[0] == "freeze" and connected == command[1]: 
+                ready = False
+                connected = ""
+                logging.info(connected + " has froozen their screen")
+               
+            #WIP, for playing youtube videos
+            elif "tube" in command[0] and connected == "":
+                if command[0] == "tube-load":
+                    print(command[2])
+                    tube = youtube()
+                    tube.url = command[2]
+                    tube.start()
+                    while True:
+                        if tube.player.is_playing():
+                            client.send("ready".encode('ascii'))
+                            break
+                elif command[0] == "tube-stop":
+                    tube.player.quit()
+                elif command[0] == "tube-forward":
+                    tube.player.seek(3)
+                elif command[0] == "tube-back":
+                    tube.player.seek(-3)
+                elif command[0] == "tube-pause":
+                    tube.player.play_pause()
+            
+            #This condition is met if the user wants to play a DVD or Media file.
+            elif command[0] == "media" and connected == "":
+                logging.info(connected + " is trying to stream a Media file or DVD")
+                subprocess.call("tvservice -p &",shell=True)
+                subprocess.call("fuser -k 8090/udp",shell=True)
+                subprocess.call("nohup omxplayer -o hdmi --lavfdopts probesize:8000 --timeout 60 --threshold 0 udp://0.0.0.0:8090?listen > /tmp/nohup.out &", shell=True)
+                time.sleep(1)
+                #Inform client that it is now ok to start ffmpeg
+                client.send("ready".encode('ascii'))
+
+            elif command[0] == "tu-media" and connected == "":
+                logging.info(connected + " is trying to stream a youtube video")
+                subprocess.call("tvservice -p &",shell=True)
+                subprocess.call("fuser -k 8090/udp",shell=True)
+                time.sleep(1)
+                #Inform client that it is now ok to start ffmpeg
+                client.send("ready".encode('ascii'))
      
             #Check if client is still online
-            if command[0] == "active":
+            elif command[0] == "active":
                 timestamp = time.localtime()
                 ready = True
                 client.send("ok".encode('ascii'))
