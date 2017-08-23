@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.5.1b'''
+Mirrorcast Version 0.5.2b'''
 import socket, gi, subprocess, time, os, threading, logging, dbus,logging.handlers
 from hosts import Hosts as hosts
 from displays import Displays
@@ -285,7 +285,7 @@ class TrayMenu:
             self.state = "stopped"
             mirror_logger.info("User connected to " + self.hosts.receiver + " to play media file")
             Tk().withdraw()
-            types= [("Video Files", "*.mp4;*.avi;*.mov;*.mkv;*.flv;*.mpeg;*.mpg;*.wmv"), ("All files", "*.*")]
+            types= [("Video Files", ("*.mp4","*.avi","*.mov","*.mkv","*.flv","*.mpeg","*.mpg","*.wmv")), ("All files", "*.*")]
             file = askopenfilename(filetypes=types)
             subprocess.call("killall -9 vlc",shell=True)
             subprocess.call("vlc -q '" + file + "' --sout '#rtp{access=udp,mux=ts,dst=" + self.hosts.receiver + ",port=8090}' :sout-all &",shell=True)
