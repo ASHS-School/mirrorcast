@@ -11,7 +11,7 @@ Created on Mon Aug 14 20:09:22 2017
 #Please use python3 and not 2.7, 2.7 will cause problems
 
 import socket,subprocess,time,logging, threading
-
+#As I mainly use a Raspberry Pi, this script has not been updated, it may still work for screen mirroring but other features are not implimented
 logging.basicConfig(filename='/var/log/mirrorcast_server.log',level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
 logging.info("Started Server")
 
