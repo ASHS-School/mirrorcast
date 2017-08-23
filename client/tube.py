@@ -23,14 +23,17 @@ class Tube(object):
         self.backb=Button(controls,text='Rewind',command=self.back)
         self.playb=Button(controls,text='Play/Pause',command=self.play)
         self.forwardb=Button(controls,text='Fast-Forward',command=self.forward)
+        self.volupb=Button(controls,text='Vol+',command=self.volup)
+        self.voldownb=Button(controls,text='Vol-',command=self.voldown)
         self.stopb=Button(controls,text='Stop',command=self.stop)
         self.state.pack(side=LEFT)
         self.backb.pack(side=LEFT)
         self.playb.pack(side=LEFT)
         self.forwardb.pack(side=LEFT)
+        self.voldownb.pack(side=LEFT)
+        self.volupb.pack(side=LEFT)
         self.stopb.pack(side=LEFT)
     def load(self):
-        self.set_state("loading")
         cmd = "tube-load,"
         self.value=self.e.get()
         self.send_cmd(cmd, self.value)
@@ -50,8 +53,19 @@ class Tube(object):
         return
     def stop(self):
         cmd = "tube-stop,"
+        self.value=""
         self.send_cmd(cmd, self.value)
         self.set_state("")
+        return   
+    def volup(self):
+        cmd = "tube-up,"
+        self.value=self.e.get()
+        self.send_cmd(cmd, self.value)
+        return
+    def voldown(self):
+        cmd = "tube-down,"
+        self.value=self.e.get()
+        self.send_cmd(cmd, self.value)
         return
     def send_cmd(self, cmd, url):
         command = cmd + socket.gethostname() + "," + url
@@ -73,6 +87,13 @@ class Tube(object):
     def set_state(self, state):
         self.state.configure(text=state)
         return
+        
+    def on_closing(self):
+        cmd = "tube-stop,"
+        self.value=""
+        self.send_cmd(cmd, self.value)
+        self.set_state("")
+        
 
 '''def fun():
     root=Tk()
