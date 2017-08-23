@@ -38,12 +38,13 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 <li>add/edit the hostnames or ip addresses of your receivers to /opt/mirrorcast/receivers (if the receiver is widescreen then put '16:9' as the aspect)</li></ul></p>
 
 <p>Using the raspberry pi receiver<ul>
-<li>install omxplayer, youtube-dl and omxplayer-wrapper(https://github.com/willprice/python-omxplayer-wrapper)</li>
+<li>install omxplayer, youtube-dl and python-omxplayer-wrapper (make sure you install omxplayer-wrapper for using python3 and not 2.7)</li>
+<li>download mirrorcast_server_pi.py and youtube_player.py from the server folder or just clone the whole repo</li>
 <li>add the following to /etc/rc.local</li>
 <li>python3 /path/to/mirrorcast_server_pi.py</li>
 </ul></p>
 
-<p>By default mirrorcast uses udp port 8090 and tcp port 8092 and for streaming youtube you will need to give your pi access to youtube.com and googlevideo</p>
+<p>By default mirrorcast uses udp port 8090 and tcp port 8092</p>
 
 <p>To start mirroring your desktop, start the mirrorcast application, it will add an applet to your toolbar, first select the display you want to mirror(if you have more than one), then select your receiver, then click 'start mirroring'</p>
 
