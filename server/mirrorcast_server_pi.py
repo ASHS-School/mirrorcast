@@ -12,6 +12,7 @@ logging.info("Started Server")
 timestamp = time.localtime()
 connected = ""
 ready = False
+playing = False
 
 def connection():
     retries = 10
@@ -25,7 +26,9 @@ def connection():
         global connected
         global timestamp
         global ready
+        global playing
         
+        tube = ""
         
         while True:
             client, address = sock.accept()
@@ -67,22 +70,33 @@ def connection():
             #WIP, for playing youtube videos
             elif "tube" in command[0] and connected == "":
                 if command[0] == "tube-load":
-                    print(command[2])
+                    subprocess.call("tvservice -p &",shell=True)
+                    subprocess.call("fuser -k 8090/udp",shell=True)
+                    if tube != "":
+                        tube.player.stop()
                     tube = youtube()
                     tube.url = command[2]
                     tube.start()
                     while True:
                         if tube.player.is_playing():
                             client.send("ready".encode('ascii'))
+                            playing == True
                             break
-                elif command[0] == "tube-stop":
-                    tube.player.quit()
-                elif command[0] == "tube-forward":
-                    tube.player.seek(3)
-                elif command[0] == "tube-back":
-                    tube.player.seek(-3)
-                elif command[0] == "tube-pause":
+                elif command[0] == "tube-stop" and tube != "":
+                    tube.player.stop()
+                    tube = ""
+                elif command[0] == "tube-forward" and tube != "":
+                    tube.player.seek(30)
+                elif command[0] == "tube-back" and tube != "":
+                    tube.player.seek(-30)
+                elif command[0] == "tube-pause" and tube != "":
                     tube.player.play_pause()
+                elif command[0] == "tube-up" and tube != "":
+                    if tube.player.volume() < 700.0:
+                        tube.player.set_volume(tube.player.volume() + 100.0)
+                elif command[0] == "tube-down" and tube != "":
+                    if tube.player.volume() > -1550.0:
+                        tube.player.set_volume(tube.player.volume() - 100.0)
             
             #This condition is met if the user wants to play a DVD or Media file.
             elif command[0] == "media" and connected == "":
@@ -93,7 +107,7 @@ def connection():
                 time.sleep(1)
                 #Inform client that it is now ok to start ffmpeg
                 client.send("ready".encode('ascii'))
-
+    
             elif command[0] == "tu-media" and connected == "":
                 logging.info(connected + " is trying to stream a youtube video")
                 subprocess.call("tvservice -p &",shell=True)
