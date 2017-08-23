@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
-import os, subprocess, logging, re
+import os, subprocess, logging, re, logging.handlers
 
-logging.basicConfig(filename='/opt/mirrorcast/mirrorcast.log',level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
+mirror_logger = logging.getLogger()
+mirror_logger.setLevel(logging.DEBUG)
+handler = logging.handlers.SysLogHandler(address = '/dev/log')
+formatter = logging.Formatter(' mirrorcast - %(name)s -  %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+mirror_logger.addHandler(handler)
+
+#mirror_logger.basicConfig(filename='/opt/mirrorcast/mirrorcast.log',level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
 
 class Displays():
     def __init__(self):
@@ -36,9 +43,9 @@ class Displays():
                 l.append(setting.group(3).strip('\''))
                 l.append(str(data3[i]).strip(("b\'")))
                 displays.append(l)
-            logging.info(displays)        
+            mirror_logger.info(displays)        
         except:
-            logging.warning("Something went wrong getting monitor infomation, defaulting to generic names")
+            mirror_logger.warning("Something went wrong getting monitor infomation, defaulting to generic names")
         return displays
         
         #If the user has more than 1 display plugged into their computer, they can select which one they want to cast
@@ -49,7 +56,7 @@ class Displays():
                 self.xoffset = i[2]
                 self.yoffset = i[3]
                 self.type = i[4]
-                logging.info("Selected Monitor: " + i[0] + " res: " + i[1] + " offset: " + i[2] + ":" + i[3])
+                mirror_logger.info("Selected Monitor: " + i[0] + " res: " + i[1] + " offset: " + i[2] + ":" + i[3])
                 
         #Changes display reslution back if it was altered to match receiver
     def display(self, val, aspect):
