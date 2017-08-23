@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-import logging, subprocess, time, gi
+import logging, subprocess, time, gi, logging.handlers
 gi.require_version('Notify', '0.7')
 from gi.repository import Notify as notify
 
-logging.basicConfig(filename='/opt/mirrorcast/mirrorcast.log',level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
+mirror_logger = logging.getLogger()
+mirror_logger.setLevel(logging.DEBUG)
+handler = logging.handlers.SysLogHandler(address = '/dev/log')
+formatter = logging.Formatter(' mirrorcast - %(name)s -  %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+mirror_logger.addHandler(handler)
+#mirror_logger.basicConfig(filename='/opt/mirrorcast/mirrorcast.log',level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
 
 class Audio():
     def __init__(self):
@@ -11,7 +17,7 @@ class Audio():
             subprocess.call("pulseaudio &", shell=True)
             self.audioDev = subprocess.check_output("pacmd list-sinks | grep -o -P '(?<=name: \<).*.analog-stereo(?=>)'", shell=True).decode("utf-8").rstrip()
         except:
-            logging.warning("Failed to detect audio device, defaulting to sink port 0")
+            mirror_logger.warning("Failed to detect audio device, defaulting to sink port 0")
             self.audioDev = "0"
             
     def audio(self, toggle):
@@ -26,7 +32,7 @@ class Audio():
                 #subprocess.call("pacmd set-sink-port " + str(self.audioDev) + " analog-output-lineout &", shell=True)
                 #subprocess.call("amixer set Capture toggle", shell=True)
             except:
-                logging.warning("Cannot change audio output to headphones")
+                mirror_logger.warning("Cannot change audio output to headphones")
             return
         else:
             try:
@@ -35,7 +41,7 @@ class Audio():
                 time.sleep(1)
                 subprocess.call("amixer set Capture cap", shell=True)
             except:
-                logging.warning("Failed to revert audio settings")
+                mirror_logger.warning("Failed to revert audio settings")
                 
     def monitor_audio(self):
         try:
@@ -55,6 +61,6 @@ class Audio():
             audiosource = audiosource.splitlines()
             subprocess.call("pactl move-source-output " + str(stream) + " " + str(audiosource[0])[1:].strip('\'') + ".monitor", shell=True)
         except:
-            logging.warning("Something went wrong when attempting to change ffmpeg audio to monitor desktop audio")
+            mirror_logger.warning("Something went wrong when attempting to change ffmpeg audio to monitor desktop audio")
             notify.init("mirrorMenu")
             notify.Notification.new("Audio Error", "There was an issue trying to change your audio settings, you may not be able to send audio to receiver.", None).show()
