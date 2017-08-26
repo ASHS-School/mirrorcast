@@ -17,7 +17,6 @@ from gi.repository import AppIndicator3 as appindicator
 from gi.repository import Notify as notify
 from gi.repository import GObject as gobject
 from dbus.mainloop.glib import DBusGMainLoop
-
 mirror_logger = logging.getLogger()
 mirror_logger.setLevel(logging.DEBUG)
 handler = logging.handlers.SysLogHandler(address = '/dev/log')
@@ -157,7 +156,9 @@ class TrayMenu:
             self.state = "stopped"
             self.sound.audio(False)
             self.Display.display(False, self.hosts.aspect)
-            subprocess.call("killall -9 ffmpeg", shell=True)
+            if self.ffmpeg != None:
+                if self.ffmpeg.poll() == None:
+                    self.ffmpeg.terminate()
             w.set_label('Start Mirroring')
             return
     
@@ -182,7 +183,7 @@ class TrayMenu:
             self.state = "casting"
             time.sleep(1)
             display = os.environ['DISPLAY']#get display of current user
-            ffmpeg = subprocess.Popen(["ffmpeg", "-loglevel", "warning", "-f", "pulse", "-ac", "2", "-i", "default", "-async", "1", "-f", "x11grab", "-r", "25", "-s", str(res), "-i", str(display) + "+" + str(int(self.Display.xoffset)) + "," + str(self.Display.yoffset), "-aspect", self.hosts.aspect, "-vcodec", "libx264", "-pix_fmt", "yuv420p", "-tune", "zerolatency", "-preset", "ultrafast", "-vf", "scale=" + str(res).replace('x', ':'), "-f", "mpegts", "udp://" + self.hosts.receiver + ":8090"])
+            self.ffmpeg = subprocess.Popen(["ffmpeg", "-loglevel", "warning", "-f", "pulse", "-ac", "2", "-i", "default", "-async", "1", "-f", "x11grab", "-r", "25", "-s", str(res), "-i", str(display) + "+" + str(int(self.Display.xoffset)) + "," + str(self.Display.yoffset), "-aspect", self.hosts.aspect, "-vcodec", "libx264", "-pix_fmt", "yuv420p", "-tune", "zerolatency", "-preset", "ultrafast", "-vf", "scale=" + str(res).replace('x', ':'), "-f", "mpegts", "udp://" + self.hosts.receiver + ":8090"], stdout=subprocess.PIPE)
             self.sound.monitor_audio()
             notify.Notification.new("Connection Established", "Connection to " + self.hosts.receiver + " established.", None).show()
             
@@ -234,7 +235,7 @@ class TrayMenu:
                     i = i + 1
                     if i == 1:
                         mirror_logger.warning("Attempting to reconnect to " + self.hosts.receiver)
-                        if  ffmpeg.poll() == None:
+                        if  self.ffmpeg.poll() == None:
                             self.ffmpeg.terminate()
                         notify.Notification.new("Reconnecting", "Connection to " + self.hosts.receiver + " has been lost. Attempting to reconnect.", None).show()
                         time.sleep(2)
@@ -298,12 +299,12 @@ class TrayMenu:
             file = askopenfilename(filetypes=types)
             select.destroy()
             print(file)
-            if file == ():
+            if file == () or file == None or file == "":
                 return
             if self.vlc != None:
                 if self.vlc.poll() == None:
                     self.vlc.terminate()
-            subprocess.Popen(["vlc", "-q", "file://" + file, "--sout-avcodec-strict=-2", "--sout=#transcode{vcodec=h264,vb=2000,scale=Auto}:duplicate{dst=http{mux=ts,dst=:8090/video},dst=display}", ":sout-keep"])
+            subprocess.Popen(["vlc", "-q", "file://" + file, "--sout-avcodec-strict=-2", "--sout=#transcode{vcodec=h264,vb=2000,scale=Auto}:duplicate{dst=http{mux=ts,dst=:8090/video},dst=display}", ":sout-keep"], stdout=subprocess.PIPE)
             time.sleep(2)            
             self.send_cmd("media-start,")
             ui = mediaui(self.hosts.receiver)
@@ -326,7 +327,7 @@ class TrayMenu:
             if self.vlc != None:
                 if self.vlc.poll() == None:
                     self.vlc.terminate()
-            self.vlc = subprocess.Popen(["vlc", "-q", "dvdsimple://", "--sout-avcodec-strict=-2", "--sout-x264-preset", "ultrafast", "--sout=#transcode{vcodec=h264,vb=2000,scale=Auto}:duplicate{dst=http{mux=ts,dst=:8090/video},dst=display}", ":sout-keep"])
+            self.vlc = subprocess.Popen(["vlc", "-q", "dvdsimple://", "--sout-avcodec-strict=-2", "--sout-x264-preset", "ultrafast", "--sout=#transcode{vcodec=h264,vb=2000,scale=Auto}:duplicate{dst=http{mux=ts,dst=:8090/video},dst=display}", ":sout-keep"], stdout=subprocess.PIPE)
             time.sleep(2)            
             self.send_cmd("media-start,")
             ui = mediaui(self.hosts.receiver)
