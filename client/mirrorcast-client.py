@@ -1,10 +1,11 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.5.2b'''
+Mirrorcast Version 0.5.9b'''
 import socket, gi, subprocess, time, os, threading, logging, dbus,logging.handlers
 from hosts import Hosts as hosts
 from displays import Displays
 from audio import Audio
 from tube import Tube
+from media import Media
 from tkinter import *
 from tkinter.filedialog import askopenfilename
 gi.require_version('AppIndicator3', '0.1')
@@ -30,6 +31,8 @@ class TrayMenu:
         mirror_logger.info("Started Mirrorcast")
         self.indicator = appindicator.Indicator.new("mirrorMenu", os.path.abspath('sample_icon.svg'), appindicator.IndicatorCategory.SYSTEM_SERVICES)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
+        
+        #A string so we know what the user is doing
         self.state = "stopped"
         self.menu = gtk.Menu()
         
@@ -37,7 +40,6 @@ class TrayMenu:
         item_start= gtk.MenuItem('Start Mirroring') 
         item_start.connect('activate', self.start)
         self.menu.append(item_start)
-        self.sleep = dbus_listen(item_start)
         #Media Sub Menu
         self.media_sub = gtk.Menu()
         item_media= gtk.MenuItem('Play Media (Experimental)')
@@ -122,6 +124,9 @@ class TrayMenu:
         self.menu.show_all()
         self.indicator.set_menu(self.menu)
         self.sound = Audio()
+        self.ffmpeg = None
+        self.vlc = None
+        self.sleep = dbus_listen(item_start, self.ffmpeg)
         
     #the following function is run when the user clicks "Start/Stop Mirroring"
     def start(self, w):
@@ -145,20 +150,20 @@ class TrayMenu:
             mirror_logger.info("User connected to " + self.hosts.receiver)
             w.set_label("Stop Mirroring")
             self.start_casting()
+            #Start a loop that will keep checking if the client can still reach the server
             connection=threading.Thread(target=self.alive,args=[w])
             connection.start()
         elif w.get_label() == 'Stop Mirroring':
             self.state = "stopped"
             self.sound.audio(False)
             self.Display.display(False, self.hosts.aspect)
-            subprocess.call("killall ffmpeg", shell=True)
+            subprocess.call("killall -9 ffmpeg", shell=True)
             w.set_label('Start Mirroring')
             return
     
     def start_casting(self):
             res = self.Display.resolution
             self.sleep.sleep = False
-            #woffset = 0
             #If receiver is set to display 4:3 and the client is 16:9 then change screen resoltion to 1024x768
             if (self.hosts.aspect == "wide" or self.hosts.aspect == "16:9" or self.hosts.aspect == "16:10") and self.Display.get_ratio(res) == "16:9":
                 self.hosts.aspect = "16:9"     
@@ -172,13 +177,12 @@ class TrayMenu:
                         mirror_logger.warning("Could now change screen resolution to 4:3")
                         notify.Notification.new("Resolution Error", "Failed to change screen resolution to match receiver.", None).show()
                         return
-            subprocess.call("killall ffmpeg", shell=True)
             self.sound.audio(True)
             #Start encoding and sending the stream to the receiver
             self.state = "casting"
             time.sleep(1)
             display = os.environ['DISPLAY']#get display of current user
-            subprocess.call("ffmpeg -loglevel warning -f pulse -ac 2 -i default -async 1 -f x11grab -r 25 -s " + str(res) + " -i " + str(display) + "+" + str(int(self.Display.xoffset)) + "," + str(self.Display.yoffset) + " -aspect " + self.hosts.aspect + " -vcodec libx264 -pix_fmt yuv420p -tune zerolatency -preset ultrafast -vf scale=" + str(res).replace('x', ':') + " -f mpegts udp://" + self.hosts.receiver + ":8090 &", shell=True)
+            ffmpeg = subprocess.Popen(["ffmpeg", "-loglevel", "warning", "-f", "pulse", "-ac", "2", "-i", "default", "-async", "1", "-f", "x11grab", "-r", "25", "-s", str(res), "-i", str(display) + "+" + str(int(self.Display.xoffset)) + "," + str(self.Display.yoffset), "-aspect", self.hosts.aspect, "-vcodec", "libx264", "-pix_fmt", "yuv420p", "-tune", "zerolatency", "-preset", "ultrafast", "-vf", "scale=" + str(res).replace('x', ':'), "-f", "mpegts", "udp://" + self.hosts.receiver + ":8090"])
             self.sound.monitor_audio()
             notify.Notification.new("Connection Established", "Connection to " + self.hosts.receiver + " established.", None).show()
             
@@ -195,7 +199,7 @@ class TrayMenu:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(5)
                 sock.connect((self.hosts.receiver, 8092))
-                #sock.settimeout(None)
+                sock.settimeout(None)
                 #If the user's computer is going to sleep
                 if self.state == "stopped" or self.sleep.sleep == True:
                     mirror_logger.info("User stopped casting")
@@ -204,19 +208,20 @@ class TrayMenu:
                     sock.close()   
                     return
                 if self.state == "freeze":
-                    time.sleep(1)
-                    subprocess.call("killall ffmpeg", shell=True)
                     logging.info("User frooze their screen")
                     command = "freeze," + socket.gethostname()
                     sock.send(command.encode('ascii'))
+                    status = sock.recv(1024)
+                    if status.decode('ascii') == "paused":
+                        self.ffmpeg.terminate()
+                        w.set_label('Start Mirroring')
+                        notify.init("mirrorMenu")
+                        notify.Notification.new("Freezed", "You have frozen your current desktop, click Start Mirroring to resume", None).show()
+                        self.state = "stopped"
+                        time.sleep(1)
+                        self.sound.audio(False)
+                        self.Display.display(False, self.hosts.aspect)
                     sock.close()
-                    w.set_label('Start Mirroring')
-                    notify.init("mirrorMenu")
-                    notify.Notification.new("Freezed", "You have frozen your current desktop, click Start Mirroring to resume", None).show()
-                    self.state = "stopped"
-                    time.sleep(1)
-                    self.sound.audio(False)
-                    self.Display.display(False, self.hosts.aspect)
                     return
                 sock.send(command.encode('ascii'))
                 status = sock.recv(1024)
@@ -229,7 +234,8 @@ class TrayMenu:
                     i = i + 1
                     if i == 1:
                         mirror_logger.warning("Attempting to reconnect to " + self.hosts.receiver)
-                        subprocess.call("killall ffmpeg", shell=True)
+                        if  ffmpeg.poll() == None:
+                            self.ffmpeg.terminate()
                         notify.Notification.new("Reconnecting", "Connection to " + self.hosts.receiver + " has been lost. Attempting to reconnect.", None).show()
                         time.sleep(2)
                     if self.connect("play,") == True:
@@ -249,7 +255,9 @@ class TrayMenu:
         self.state = "stopped"
         self.Display.display(False, self.hosts.aspect)
         #kill ffmpeg incase user forgot to click "stop"
-        subprocess.call("killall ffmpeg", shell=True)
+        if self.ffmpeg != None:
+            if self.ffmpeg.poll() == None:
+                self.ffmpeg.terminate()
         gtk.main_quit()
 
     def freeze(self, w):
@@ -277,19 +285,29 @@ class TrayMenu:
             if self.hosts.receiver == "None":
                 notify.init("mirrorMenu")
                 notify.Notification.new("Error", "Please select a receiving device", None).show()
+                return
             if self.connect("media,") == False:
                 notify.init("mirrorMenu")
                 notify.Notification.new("Connection Error", "Could not connect to" + self.hosts.receiver + ". please try again and if problem persists then please contact your system administrator.", None).show()
                 mirror_logger.warning("Failed to connect to " + self.hosts.receiver)
                 return
-            self.state = "stopped"
             mirror_logger.info("User connected to " + self.hosts.receiver + " to play media file")
-            Tk().withdraw()
+            select = Tk()
+            select.withdraw()
             types= [("Video Files", ("*.mp4","*.avi","*.mov","*.mkv","*.flv","*.mpeg","*.mpg","*.wmv")), ("All files", "*.*")]
             file = askopenfilename(filetypes=types)
-            subprocess.call("killall -9 vlc",shell=True)
-            subprocess.call("vlc -q '" + file + "' --sout '#rtp{access=udp,mux=ts,dst=" + self.hosts.receiver + ",port=8090}' :sout-all &",shell=True)
-
+            select.destroy()
+            print(file)
+            if file == ():
+                return
+            if self.vlc != None:
+                if self.vlc.poll() == None:
+                    self.vlc.terminate()
+            subprocess.Popen(["vlc", "-q", "file://" + file, "--sout-avcodec-strict=-2", "--sout=#transcode{vcodec=h264,vb=2000,scale=Auto}:duplicate{dst=http{mux=ts,dst=:8090/video},dst=display}", ":sout-keep"])
+            time.sleep(2)            
+            self.send_cmd("media-start,")
+            ui = mediaui(self.hosts.receiver)
+            
     def dvd(self, w):
         if self.state == "casting":
             notify.init("mirrorMenu")
@@ -298,16 +316,21 @@ class TrayMenu:
             if self.hosts.receiver == "None":
                 notify.init("mirrorMenu")
                 notify.Notification.new("Error", "Please select a receiving device", None).show()
+                return
             if self.connect("media,") == False:
                 notify.init("mirrorMenu")
                 notify.Notification.new("Connection Error", "Could not connect to" + self.hosts.receiver + ". please try again and if problem persists then please contact your system administrator.", None).show()
                 mirror_logger.warning("Failed to connect to " + self.hosts.receiver)
                 return
-            self.state = "stopped"
             mirror_logger.info("User connected to " + self.hosts.receiver + " to stream DVD")
-            subprocess.call("killall -9 vlc",shell=True)
-            subprocess.call("vlc -q dvdsimple:// --sout '#transcode{vcodec=h264,vb=800,acodec=mpga,ab=128,channels=2,samplerate=44100}:duplicate{dst=udp{mux=ts,dst=" + self.hosts.receiver + ":8090},dst=display}' :sout-all :sout-keep &",shell=True)  
-
+            if self.vlc != None:
+                if self.vlc.poll() == None:
+                    self.vlc.terminate()
+            self.vlc = subprocess.Popen(["vlc", "-q", "dvdsimple://", "--sout-avcodec-strict=-2", "--sout-x264-preset", "ultrafast", "--sout=#transcode{vcodec=h264,vb=2000,scale=Auto}:duplicate{dst=http{mux=ts,dst=:8090/video},dst=display}", ":sout-keep"])
+            time.sleep(2)            
+            self.send_cmd("media-start,")
+            ui = mediaui(self.hosts.receiver)
+            
     def youtube(self, w):
         if self.state == "casting":
             notify.init("mirrorMenu")
@@ -321,7 +344,6 @@ class TrayMenu:
                 notify.Notification.new("Connection Error", "Could not connect to" + self.hosts.receiver + ". please try again and if problem persists then please contact your system administrator.", None).show()
                 mirror_logger.warning("Failed to connect to " + self.hosts.receiver)
                 return
-            self.state = "stopped"
             ui = tubeui(self.hosts.receiver)
 
         
@@ -349,8 +371,21 @@ class TrayMenu:
             sock.close()
         except:
             return False
-        self.state = "casting"
+        if cmd == "play,":
+            self.state = "casting"
         return True
+        
+    def send_cmd(self, cmd):
+        command = cmd + socket.gethostname()
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((self.hosts.receiver, 8092))
+            sock.settimeout(None)
+            sock.send(command.encode('ascii'))
+            sock.close()
+        except:
+            return False
                             
 class tubeui():
     def __init__(self, receiver):
@@ -363,18 +398,36 @@ class tubeui():
     def on_exit(self):
         self.m.on_closing()
         self.root.destroy()
+        
+        
+class mediaui():
+    def __init__(self, receiver):
+        self.root=Tk()
+        self.m=Media(self.root)
+        self.m.receiver=receiver
+        self.root.title("Receiver Controls")
+        self.root.protocol("WM_DELETE_WINDOW", self.on_exit)
+        self.root.mainloop()
+        
+    def on_exit(self):
+        #self.m.on_closing()
+        subprocess.call("killall -9 vlc", shell=True)
+        self.root.destroy()
 
 class dbus_listen(): 
     
     def handle_sleep(self, *args):
         self.w.set_label('Start Mirroring')
         mirror_logger.info("User computer is going to sleep, killing ffmpeg")
-        subprocess.call("killall ffmpeg", shell=True)
+        if self.ffmpeg != None:
+            if self.ffmpeg.poll() == None:
+                self.ffmpeg.terminate()
         self.sleep = True
     
-    def __init__(self, w):
+    def __init__(self, w, ffmpeg):
         self.sleep = False
         self.w = w
+        self.ffmpeg = ffmpeg
         DBusGMainLoop(set_as_default=True)     # integrate into gobject main loop
         bus = dbus.SystemBus()                 # connect to system wide dbus
         bus.add_signal_receiver(               # define the signal to listen to
