@@ -93,14 +93,3 @@ class Tube(object):
         self.value=""
         self.send_cmd(cmd, self.value)
         self.set_state("")
-        
-
-'''def fun():
-    root=Tk()
-    m=Tube(root)
-    root.title("Play Youtube URL")
-    root.mainloop()
-    print(m.value)
-
-if __name__ == "__main__":
-    fun()'''
