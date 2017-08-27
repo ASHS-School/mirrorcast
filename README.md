@@ -16,6 +16,9 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 <h2>TO DO:</h2>
 
 <b>DEBIAN/UBUNTU APPLET</b>
+
+<p>The debian/ubuntu app is working but could do with improvements</p>
+
 <ul><li>Automate audio settings(This is partially done, you might need to modify some code to automate audio settings for some computers)</li>
 <li>Add option mirror selected application</li>
 <li>Tidy up code (Find simplier and more pythonic solutions where possible)</li></ul>
@@ -39,12 +42,12 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 
 <p>Using the raspberry pi receiver<ul>
 <li>install omxplayer, youtube-dl and python-omxplayer-wrapper (make sure you install omxplayer-wrapper for using python3 and not 2.7)</li>
-<li>download mirrorcast_server_pi.py and youtube_player.py from the server folder or just clone the whole repo</li>
+<li>download mirrorcast_server_pi.py and omx.py from the server folder or just clone the whole repo</li>
 <li>add the following to /etc/rc.local</li>
 <li>python3 /path/to/mirrorcast_server_pi.py</li>
 </ul></p>
 
-<p>By default mirrorcast uses udp port 8090 and tcp port 8092</p>
+<p>By default the mirrorcast server uses udp port 8090 and tcp port 8092. If the client wants to stream DVD's and Media, then TCP port 8090 needs to be open on the client side.</p>
 
 <p>To start mirroring your desktop, start the mirrorcast application, it will add an applet to your toolbar, first select the display you want to mirror(if you have more than one), then select your receiver, then click 'start mirroring'</p>
 
