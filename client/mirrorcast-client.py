@@ -313,9 +313,6 @@ class TrayMenu:
         if self.state == "casting":
             notify.init("mirrorMenu")
             notify.Notification.new("Error", "Please stop mirroring before you try to use this feature", None).show()
-        if not os.path.exists("/dev/sr0"):
-            notify.init("mirrorMenu")
-            notify.Notification.new("Error", "No DVD Detected, please insert a DVD first.", None).show()
         else:
             if self.hosts.receiver == "None":
                 notify.init("mirrorMenu")
