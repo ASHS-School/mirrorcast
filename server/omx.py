@@ -11,7 +11,11 @@ class Omx():
     def youtube(self):
         proc = subprocess.Popen(['youtube-dl', '-g', '-f', 'mp4', self.url], stdout=subprocess.PIPE)
         url = proc.stdout.read()
+        print(url)
+        if url.decode("utf-8") == '':
+            return False
         self.player = OMXPlayer(url.decode("utf-8", "strict")[:-1])
+        return True
 
     def start_media(self, host):
         address = "http://" + str(host) + ":8090/video"
