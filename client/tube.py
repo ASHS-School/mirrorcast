@@ -79,6 +79,8 @@ class Tube(object):
                 status = sock.recv(8024)
                 if status.decode('ascii') == "ready":
                     self.set_state("Playing")
+                elif status.decode('ascii') == "error":
+                    self.set_state("Invalid URL: Please check URL is valid")
             sock.close()
         except:
             self.set_state("Failed, Please make sure you copied the URL correctly")
