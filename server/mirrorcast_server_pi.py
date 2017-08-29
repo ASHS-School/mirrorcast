@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#Mirrorcast Server for Raspberry Pi, make sure to use supervisor to set up omxplayer as a daemon
+#Mirrorcast Server for Raspberry Pi.
 #Please use python3 and not 2.7, 2.7 will cause problems
 
 import socket,subprocess,time,logging, threading
