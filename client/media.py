@@ -19,35 +19,30 @@ class Media(object):
         controls.pack(side=BOTTOM)
         self.audiobackb=Button(controls,text='Audio Track Back',command=self.audioback)
         self.audioforwb=Button(controls,text='Audio Track Up',command=self.audioforw)
-        self.volupb=Button(controls,text='Vol Up',command=self.volup)
-        self.voldownb=Button(controls,text='Vol Down',command=self.voldown)
         self.audioforwb.pack(side=LEFT)
         self.audiobackb.pack(side=LEFT)
-        self.volupb.pack(side=LEFT)
-        self.voldownb.pack(side=LEFT) 
-
+        self.VOL=Label(controls,text="Volume")
+        self.VOL.pack(side=LEFT)
+        self.volb = Scale(controls, from_=-2500, to=700, orient=HORIZONTAL, command=self.vol)
+        self.volb.set(0)
+        self.volb.pack()
+    def vol(self, vol):
+        cmd = "tube-vol,"
+        self.send_cmd(cmd)
+        return   
     def audioforw(self):
         cmd = "tube-track-up,"
-        self.value=""
         self.send_cmd(cmd)
         return   
     def audioback(self):
         cmd = "tube-track-down,"
-        self.value=""
         self.send_cmd(cmd)
         return   
-    def volup(self):
-        cmd = "tube-up,"
-        self.value=""
-        self.send_cmd(cmd)
-        return
-    def voldown(self):
-        cmd = "tube-down,"
-        self.value=""
-        self.send_cmd(cmd)
-        return
     def send_cmd(self, cmd):
-        command = cmd + socket.gethostname()
+        if cmd == "tube-vol,":
+            command = cmd + socket.gethostname() + "," + str(self.volb.get())
+        else:
+            command = cmd + socket.gethostname()
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
