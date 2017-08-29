@@ -23,15 +23,16 @@ class Tube(object):
         self.backb=Button(controls,text='Rewind',command=self.back)
         self.playb=Button(controls,text='Play/Pause',command=self.play)
         self.forwardb=Button(controls,text='Fast-Forward',command=self.forward)
-        self.volupb=Button(controls,text='Vol+',command=self.volup)
-        self.voldownb=Button(controls,text='Vol-',command=self.voldown)
         self.stopb=Button(controls,text='Stop',command=self.stop)
+        self.volb = Scale(controls, from_=-2500, to=700, orient=HORIZONTAL, command=self.vol)
         self.state.pack(side=LEFT)
         self.backb.pack(side=LEFT)
         self.playb.pack(side=LEFT)
         self.forwardb.pack(side=LEFT)
-        self.voldownb.pack(side=LEFT)
-        self.volupb.pack(side=LEFT)
+        self.VOL=Label(controls,text="Volume")
+        self.VOL.pack(side=LEFT)
+        self.volb.set(0)
+        self.volb.pack(side=LEFT)
         self.stopb.pack(side=LEFT)
     def load(self):
         cmd = "tube-load,"
@@ -57,18 +58,15 @@ class Tube(object):
         self.send_cmd(cmd, self.value)
         self.set_state("")
         return   
-    def volup(self):
-        cmd = "tube-up,"
-        self.value=self.e.get()
-        self.send_cmd(cmd, self.value)
-        return
-    def voldown(self):
-        cmd = "tube-down,"
-        self.value=self.e.get()
-        self.send_cmd(cmd, self.value)
-        return
+    def vol(self, vol):
+        cmd = "tube-vol,"
+        self.send_cmd(cmd, self.volb.get())
+        return   
     def send_cmd(self, cmd, url):
-        command = cmd + socket.gethostname() + "," + url
+        if cmd == "tube-vol,":
+            command = cmd + socket.gethostname() + "," + str(self.volb.get())
+        else:
+            command = cmd + socket.gethostname() + "," + url
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
