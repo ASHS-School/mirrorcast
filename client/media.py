@@ -21,9 +21,7 @@ class Media(object):
         self.audioforwb=Button(controls,text='Audio Track Up',command=self.audioforw)
         self.audioforwb.pack(side=LEFT)
         self.audiobackb.pack(side=LEFT)
-        self.VOL=Label(controls,text="Volume")
-        self.VOL.pack(side=LEFT)
-        self.volb = Scale(controls, from_=-2500, to=700, orient=HORIZONTAL, command=self.vol)
+        self.volb = Scale(controls, from_=-2500, to=400, orient=HORIZONTAL, label="Volume", showvalue=0, command=self.vol)
         self.volb.set(0)
         self.volb.pack()
     def vol(self, vol):
