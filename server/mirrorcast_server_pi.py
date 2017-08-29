@@ -116,6 +116,9 @@ def connection():
                 elif command[0] == "tube-track-up" and tube.player != None:
                     if tube.player.can_control():
                         tube.player.action(7)
+                elif command[0] == "tube-vol" and tube.player != None:
+                    if tube.player.can_control():
+                        tube.player.set_volume(float(command[2]))
                         
             #This condition is met if the user wants to play a DVD or Media file.
             elif command[0] == "media" and connected == "":
