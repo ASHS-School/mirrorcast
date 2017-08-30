@@ -28,7 +28,7 @@ mirror_logger.addHandler(handler)
 class TrayMenu:
     def __init__(self):
         mirror_logger.info("Started Mirrorcast")
-        self.indicator = appindicator.Indicator.new("mirrorMenu", os.path.abspath('sample_icon.svg'), appindicator.IndicatorCategory.SYSTEM_SERVICES)
+        self.indicator = appindicator.Indicator.new("mirrorMenu", os.path.abspath('/opt/mirrorcast/mirrorcast_tray.png'), appindicator.IndicatorCategory.SYSTEM_SERVICES)
         self.indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
         
         #A string so we know what the user is doing
