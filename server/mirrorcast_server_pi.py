@@ -85,11 +85,12 @@ def connection():
                     if tube.youtube() == False:
                             client.send("error".encode('ascii'))
                             playing == True
-                    while True:
-                        if tube.player.is_playing():
-                            client.send("ready".encode('ascii'))
-                            playing == True
-                            break
+                    else:
+                        while True:
+                            if tube.player.is_playing():
+                                client.send("ready".encode('ascii'))
+                                playing == True
+                                break
                 elif command[0] == "tube-stop" and tube.player != None:
                     kill(tube.player)
                     tube.player = None
