@@ -5,7 +5,7 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 
 <p>This application is ideal for wireless projection, no more cables, just send your desktop or media over the network to a receiver</P> 
 
-<p>At the moment, there is only a client for Debian/Ubuntu Operating systems. There is a server/receiver application for raspberry pi and Linux</p>
+<p>At the moment, there is only a client for Debian/Ubuntu Operating systems. There is a server/receiver application for raspberry pi</p>
 
 <p>Mirrorcast aims to be a low latency screen mirroring solution with high quality video and audio at 25-30fps, the later is why we will not use something like VNC.</p>
 
@@ -20,17 +20,17 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 <p>The debian/ubuntu app is working but could do with improvements</p>
 
 <ul><li>Automate audio settings(This is partially done, you might need to modify some code to automate audio settings for some computers)</li>
-<li>Add option mirror selected application</li>
+<li>Add option mirror selected application (Using Xlib and composite(redirect and pixmap) so that applications will still mirror if covered by another window, resized or minimised)</li>
 <li>Tidy up code (Find simplier and more pythonic solutions where possible)</li></ul>
 
-<b>Other (If you want to help out with the following then that would be great)</b>
+<b>Other (If you want to help out with creating a client for the following then that would be great)</b>
 <ul><li>Create Windows client application</li>
 <li>Create MacOs client application</li>
 <li>Create Android client application</li></ul>
 
 <h2>How to use</h2>
 
-<p>Currently this is a rough prototype that I have only tested using my laptop running Ubuntu 16.04 and a raspberry pi as the receiver. The applet will add a option to start mirroring the selected display to the selected receiver.</p>
+<p>Currently this is a rough prototype that I have only tested on computers running Ubuntu 16.04 and Lubuntu and a raspberry pi as the receiver. The applet will add a option to start mirroring the selected display to the selected receiver. It has been deployed at a High School where it is used so the teachers can use the projectors without wires.</p>
 
 <p>To install the mirrorcast client on debian/ubuntu<ul>
 <li>download the latest mirrorcast deb file from releases</li>
@@ -41,7 +41,7 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 <li>add/edit the hostnames or ip addresses of your receivers to /opt/mirrorcast/receivers (if the receiver is widescreen then put '16:9' as the aspect)</li></ul></p>
 
 <p>Using the raspberry pi receiver<ul>
-<li>install omxplayer, youtube-dl and python-omxplayer-wrapper (make sure you install omxplayer-wrapper for using python3 and not 2.7)</li>
+<li>install omxplayer, youtube-dl and python-omxplayer-wrapper (make sure you install omxplayer-wrapper for using python3 and not 2.7 and get the latest youtube-dl from git instead of using the one in the repository)</li>
 <li>download mirrorcast_server_pi.py and omx.py from the server folder or just clone the whole repo</li>
 <li>add the following to /etc/rc.local</li>
 <li>python3 /path/to/mirrorcast_server_pi.py</li>
