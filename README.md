@@ -20,7 +20,7 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 <p>The debian/ubuntu app is working but could do with improvements</p>
 
 <ul><li>Automate audio settings(This is partially done, you might need to modify some code to automate audio settings for some computers)</li>
-<li>Add option mirror selected application (Using Xlib and composite(redirect and pixmap) so that applications will still mirror if covered by another window, resized or minimised)</li>
+<li>Add option mirror selected application (Using Xlib and composite(redirect and pixmap) so that applications will still mirror if covered by another window, resized or minimised), this might require a full C+ conversion, unfortunately I lack practice in C and C+</li>
 <li>Tidy up code (Find simplier and more pythonic solutions where possible)</li></ul>
 
 <b>Other (If you want to help out with creating a client for the following then that would be great)</b>
