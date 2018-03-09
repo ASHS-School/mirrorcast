@@ -26,7 +26,8 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 <b>Other (If you want to help out with creating a client for the following then that would be great)</b>
 <ul><li>Create Windows client application</li>
 <li>Create MacOs client application</li>
-<li>Create Android client application</li></ul>
+<li>Create Android client application</li>
+<li>Other bug fixes; additionial features and improvements</ul>
 
 <h2>How to use</h2>
 
