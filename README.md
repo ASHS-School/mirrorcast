@@ -13,6 +13,8 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 
 <p>To acheive this we will use existing FOSS software such as ffmpeg, ffplay, VLC player and omxplayer</p>
 
+<p>Video Demo <a href="https://www.youtube.com/embed/23fGNmvI6zE">href="https://www.youtube.com/embed/23fGNmvI6zE"</a> </p>
+
 <h2>TO DO:</h2>
 
 <b>DEBIAN/UBUNTU APPLET</b>
@@ -29,7 +31,6 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 <li>Create Android client application</li>
 <li>Other bug fixes; additionial features and improvements</ul>
 
-<p>Video Demo <a href="https://www.youtube.com/embed/23fGNmvI6zE" /> </p>
 
 <h2>How to use</h2>
 
