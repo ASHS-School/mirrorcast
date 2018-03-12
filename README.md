@@ -29,7 +29,7 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 <li>Create Android client application</li>
 <li>Other bug fixes; additionial features and improvements</ul>
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/23fGNmvI6zE" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+<p>Video Demo <a href="https://www.youtube.com/embed/23fGNmvI6zE" /> </p>
 
 <h2>How to use</h2>
 
