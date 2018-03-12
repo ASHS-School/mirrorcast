@@ -29,6 +29,8 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 <li>Create Android client application</li>
 <li>Other bug fixes; additionial features and improvements</ul>
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/23fGNmvI6zE" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
 <h2>How to use</h2>
 
 <p>Currently this is a rough prototype that I have only tested on computers running Ubuntu 16.04 and Lubuntu and a raspberry pi as the receiver. The applet will add a option to start mirroring the selected display to the selected receiver. It has been deployed at a High School where it is used so the teachers can use the projectors without wires.</p>
