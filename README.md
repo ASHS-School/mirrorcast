@@ -13,7 +13,7 @@ Google chromes screen mirroring feature works well when used with a receiver suc
 
 <p>To acheive this we will use existing FOSS software such as ffmpeg, ffplay, VLC player and omxplayer</p>
 
-<p>Video Demo <a href="https://www.youtube.com/embed/23fGNmvI6zE">href="https://www.youtube.com/embed/23fGNmvI6zE"</a> </p>
+<p>Video Demo <a href="https://www.youtube.com/embed/23fGNmvI6zE">https://www.youtube.com/embed/23fGNmvI6zE</a> </p>
 
 <h2>TO DO:</h2>
 
