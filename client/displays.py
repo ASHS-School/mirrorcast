@@ -21,22 +21,15 @@ class Displays():
     def get_displays(self):
         displays = []
         try:
-            #Attempt to get names of displays
-            command = subprocess.check_output("sh " + os.path.dirname(os.path.abspath(__file__)) + "/monitors.sh", shell=True)
             #Get resolutions
             command2 = subprocess.check_output("xrandr --verbose |grep -o -P '(?<=connected ).*(?= \(\d.*)'|grep -o -P '\d\d.*x.*'", shell=True)
             ident = subprocess.check_output("xrandr -q|grep -o -P '.*(?= co.*\dx\d.*)'", shell=True)
-            data = command.splitlines()
             data2 = command2.splitlines()
             data3 = ident.splitlines()
-            h = len(data)
+            h = len(data2)
             for i in range(h):
                 l = []
-                if "\\" in str(data[i]):
-                    #If there was a failure to get display names, give displays generic names
-                    l.append("Display " + str(i+1))
-                else:
-                    l.append(str(data[i])[2:].strip('\''))
+                l.append("Display " + str(i+1))
                 setting = re.search(r'b\'(.*)\+(.*)\+(.*)', str(data2[i]), re.M)
                 l.append(setting.group(1))
                 l.append(setting.group(2))
@@ -48,7 +41,7 @@ class Displays():
             mirror_logger.warning("Something went wrong getting monitor infomation, defaulting to generic names")
         return displays
         
-        #If the user has more than 1 display plugged into their computer, they can select which one they want to cast
+    #If the user has more than 1 display plugged into their computer, they can select which one they want to mirror
     def set_display(self, but, nam):    
         for i in self.monitors:
             if but.get_label() == i[0] and but.get_active():
@@ -58,7 +51,7 @@ class Displays():
                 self.type = i[4]
                 mirror_logger.info("Selected Monitor: " + i[0] + " res: " + i[1] + " offset: " + i[2] + ":" + i[3])
                 
-        #Changes display reslution back if it was altered to match receiver
+    #Changes display reslution back if it was altered to match receiver
     def display(self, val, aspect):
         if val == False:
             if aspect == "4:3" and self.get_ratio(self.resolution) != "4:3":
