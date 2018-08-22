@@ -15,6 +15,8 @@ class Audio():
     def __init__(self):
         try:
             subprocess.call("pulseaudio &", shell=True)
+            #Set default soundcard to analog stereo
+            subprocess.check_output("pacmd set-card-profile 0 output:analog-stereo", shell=True)
             self.audioDev = subprocess.check_output("pacmd list-sinks | grep -o -P '(?<=name: \<).*.analog-stereo(?=>)'", shell=True).decode("utf-8").rstrip()
         except:
             mirror_logger.warning("Failed to detect audio device, defaulting to sink port 0")
@@ -23,12 +25,16 @@ class Audio():
     def audio(self, toggle):
         if toggle == True:
             try:
+                #Set default soundcard to analog stereo
+                subprocess.check_output("pacmd set-card-profile 0 output:analog-stereo", shell=True)
                 #Mute microphone
                 subprocess.call("amixer set Capture nocap", shell=True)
                 time.sleep(1)
                 #Change laptop audio to headphones which are hopefully not plugged in.
-                #by doing so, the sound will not be echoing from playing on 2 devices(the receiver will be delayed)
+                #by doing so, the sound will not be echoing from playing on 2 devices(as the receiver will be delayed)
+                #Ideally we should just setup a dummy audio device.
                 subprocess.call("pacmd set-sink-port " + str(self.audioDev) + " analog-output-headphones &", shell=True)
+                #On some systems you may want to change audio to line out instead of headphones
                 #subprocess.call("pacmd set-sink-port " + str(self.audioDev) + " analog-output-lineout &", shell=True)
                 #subprocess.call("amixer set Capture toggle", shell=True)
             except:
@@ -36,9 +42,10 @@ class Audio():
             return
         else:
             try:
-                #subprocess.call("pacmd set-sink-port " + str(self.audioDev) + " analog-output-speaker &", shell=True)
+                #Change Audio back to Speakers
                 subprocess.call("pacmd set-sink-port " + str(self.audioDev) + " analog-output-speaker &", shell=True)
                 time.sleep(1)
+                #Unmute Microphone
                 subprocess.call("amixer set Capture cap", shell=True)
             except:
                 mirror_logger.warning("Failed to revert audio settings")
@@ -46,7 +53,7 @@ class Audio():
     def monitor_audio(self):
         try:
             #Attempt to automate correct audio settings so that audio can be played via receiving device
-            time.sleep(2)#First give ffmpeg time to start
+            time.sleep(2)#Give ffmpeg time to start
             #Get the source id for ffmpeg
             audiostreams = subprocess.check_output("pactl list source-outputs |grep -o -P '(?<=Source Output #).*(?=.*)'", shell=True)
             audiostreams = audiostreams.splitlines()
