@@ -36,6 +36,7 @@ def connection():
             client, address = sock.accept()
             status = client.recv(8024)
             command = status.decode('ascii')
+            print(command)
             command = command.split(",")
             #Some else is already connected
             if connected != command[1] and connected != "":              
@@ -89,24 +90,24 @@ def connection():
                     subprocess.call("tvservice -p &",shell=True)
                     if tube.youtube() == False:
                             client.send("error".encode('ascii'))
-                            playing == True
+                            playing = True
                     else:
                         while True:
                             if tube.player.is_playing():
                                 client.send("ready".encode('ascii'))
-                                playing == True
+                                playing = True
                                 break
                 elif command[0] == "tube-stop" and tube.player != None:
                     kill(tube.player)
                     #subprocess.call("tvservice -o &",shell=True)
                     tube.player = None
-                elif command[0] == "tube-forward" and tube.player != None: 
+                elif command[0] == "tube-forward" and tube.player != None:
                     if tube.player.can_control():
                         tube.player.seek(30)
                 elif command[0] == "tube-back" and tube.player != None:
                     if tube.player.can_control():
                         tube.player.seek(-30)
-                elif command[0] == "tube-pause" and tube.player != None:
+                elif command[0] == "tube-pause":
                     if tube.player.can_control():
                         tube.player.play_pause()
                 elif command[0] == "tube-up" and tube.player != None:
@@ -129,17 +130,20 @@ def connection():
                         
             #This condition is met if the user wants to play a DVD or Media file.
             elif command[0] == "media" and connected == "":
-                logging.info(connected + " is trying to stream a Media file or DVD")
+                logging.info(connected + " is trying to play a video file or DVD")
                 subprocess.call("tvservice -p &",shell=True)
                 if tube.player != None:
                     kill(tube.player)
                     tube.player = None
-                #Inform client that it is now ok to start ffmpeg
+                time.sleep(1)
                 client.send("ready".encode('ascii'))
                 
             elif  command[0] == "media-start" and connected == "":
-                tube.start_media(address[0])
-    
+                logging.info(connected + "is attempting to play http://" + str(address) + ":8090/" + command[1])
+                if tube.start_media(address[0], command[1]):
+                    logging.info("Playing " + command[1])
+                else:
+                    logging.info("Error Playing " + command[1])
             elif command[0] == "tu-media" and connected == "":
                 logging.info(connected + " is trying to stream a youtube video")
                 subprocess.call("tvservice -p &",shell=True)
