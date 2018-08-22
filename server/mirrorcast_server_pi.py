@@ -51,7 +51,6 @@ def connection():
                     timestamp = time.localtime()
                     if tube.player != None:
                         kill(tube.player)
-                    tube.player = None
                     subprocess.call("tvservice -p &",shell=True)   
                     tube.mirror()
                     time.sleep(1)
@@ -64,10 +63,15 @@ def connection():
                 logging.info(connected + " has disconnected")
                 connected = ""
                 kill(tube.player)
-                subprocess.call("tvservice -p &",shell=True)
+                #subprocess.call("tvservice -o &",shell=True)
                 
             #Client wants to freeze the screen
             elif command[0] == "freeze" and connected == command[1]:     
+                ready = False
+                connected = ""
+                logging.info(connected + " has froozen their screen")
+                #client.send("paused".encode('ascii'))
+            elif command[0] == "freezee" and connected == command[1]:     
                 ready = False
                 connected = ""
                 if tube.player != None:
@@ -82,6 +86,7 @@ def connection():
                     if tube.player != None:
                         kill(tube.player)
                     tube.url = command[2]
+                    subprocess.call("tvservice -p &",shell=True)
                     if tube.youtube() == False:
                             client.send("error".encode('ascii'))
                             playing == True
@@ -93,6 +98,7 @@ def connection():
                                 break
                 elif command[0] == "tube-stop" and tube.player != None:
                     kill(tube.player)
+                    #subprocess.call("tvservice -o &",shell=True)
                     tube.player = None
                 elif command[0] == "tube-forward" and tube.player != None: 
                     if tube.player.can_control():
@@ -174,6 +180,7 @@ def timeout():
             ready = False
             if tube.player != None:
                 kill(tube.player)
+                #subprocess.call("tvservice -o &",shell=True)
                 tube.player = None
             time.sleep(1)
             connected = ""
