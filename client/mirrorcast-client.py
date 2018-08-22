@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.6.1b'''
+Mirrorcast Version 0.6.5b'''
 import socket, gi, subprocess, time, os, threading, logging, dbus,logging.handlers
 from hosts import Hosts as hosts
 from displays import Displays
@@ -8,6 +8,9 @@ from tube import Tube
 from media import Media
 from tkinter import *
 from tkinter.filedialog import askopenfilename
+#from twisted.web.server import Site
+#from twisted.web.static import File
+#from twisted.internet import reactor, endpoints
 gi.require_version('AppIndicator3', '0.1')
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gtk', '3.0')
@@ -59,7 +62,7 @@ class TrayMenu:
         self.menu.append(item_freeze)
         item_update = gtk.MenuItem('Update Mirrorcast')
         item_update.connect('activate', self.update)
-        self.menu.append(item_update)
+        #self.menu.append(item_update)
         item_quit = gtk.MenuItem('Quit')
         item_quit.connect('activate', self.quit)
         self.menu.append(item_quit)
@@ -210,7 +213,7 @@ class TrayMenu:
                     return
                 if self.state == "freeze":
                     logging.info("User frooze their screen")
-                    command = "freeze," + socket.gethostname()
+                    command = "freezee," + socket.gethostname()
                     sock.send(command.encode('ascii'))
                     status = sock.recv(1024)
                     if status.decode('ascii') == "paused":
@@ -295,19 +298,24 @@ class TrayMenu:
             mirror_logger.info("User connected to " + self.hosts.receiver + " to play media file")
             select = Tk()
             select.withdraw()
-            types= [("Video Files", ("*.mp4","*.avi","*.mov","*.mkv","*.flv","*.mpeg","*.mpg","*.wmv")), ("All files", "*.*")]
+            types= [("Video Files", ("*.mp4","*.avi","*.mov","*.mkv","*.flv","*.mpeg","*.mpg","*.wmv", "*.webm", "*.ogg", "*.ogv")), ("All files", "*.*")]
             file = askopenfilename(filetypes=types)
             select.destroy()
-            print(file)
             if file == () or file == None or file == "":
                 return
-            if self.vlc != None:
-                if self.vlc.poll() == None:
-                    self.vlc.terminate()
-            subprocess.Popen(["vlc", "-q", "file://" + file, "--sout-avcodec-strict=-2", "--sout=#transcode{vcodec=h264,vb=2000,scale=Auto}:duplicate{dst=http{mux=ts,dst=:8090/video},dst=display}", ":sout-keep"], stdout=subprocess.PIPE)
-            time.sleep(2)            
-            self.send_cmd("media-start,")
-            ui = mediaui(self.hosts.receiver)
+            #dirpath = os.path.dirname(os.path.realpath(file))
+            #resource = File(dirpath)
+            newpath = r'/tmp/media' 
+            if not os.path.exists(newpath):
+                os.makedirs(newpath)
+            if os.path.isfile(file):  
+                os.symlink(str(file), "/tmp/media/" + str(os.path.basename(file)))
+            self.ffmpeg = subprocess.Popen(["http-server", "/tmp/media", "-p", "8090"], stdout=subprocess.PIPE)
+            time.sleep(2)
+            self.send_cmd("media-start," + os.path.basename(file) + ",")
+            mediaui(self.hosts.receiver)
+            self.ffmpeg.terminate()
+        
             
     def dvd(self, w):
         if self.state == "casting":
@@ -328,7 +336,7 @@ class TrayMenu:
                 if self.vlc.poll() == None:
                     self.vlc.terminate()
             self.vlc = subprocess.Popen(["vlc", "-q", "dvdsimple://", "--sout-avcodec-strict=-2", "--sout-x264-preset", "ultrafast", "--sout=#transcode{vcodec=h264,vb=2000,scale=Auto}:duplicate{dst=http{mux=ts,dst=:8090/video},dst=display}", ":sout-keep"], stdout=subprocess.PIPE)
-            time.sleep(2)            
+            time.sleep(3)            
             self.send_cmd("media-start,")
             ui = mediaui(self.hosts.receiver)
             
@@ -411,9 +419,9 @@ class mediaui():
         self.root.mainloop()
         
     def on_exit(self):
-        #self.m.on_closing()
-        subprocess.call("killall -9 vlc", shell=True)
+        self.m.on_closing()
         self.root.destroy()
+        #reactor.stop()
 
 class dbus_listen(): 
     
