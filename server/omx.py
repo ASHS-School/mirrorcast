@@ -13,7 +13,7 @@ class Omx():
         url = proc.stdout.read()
         if url.decode("utf-8") == '':
             return False
-        self.player = OMXPlayer(url.decode("utf-8", "strict")[:-1])
+        self.player = OMXPlayer(url.decode("utf-8", "strict")[:-1], args=['-o', 'hdmi'])
         return True
 
     def start_media(self, host):
