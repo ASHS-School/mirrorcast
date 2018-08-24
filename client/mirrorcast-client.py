@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.6.5b'''
+Mirrorcast Version 0.6.8b'''
 import socket, gi, subprocess, time, os, threading, logging, dbus,logging.handlers
 from hosts import Hosts as hosts
 from displays import Displays
@@ -212,8 +212,10 @@ class TrayMenu:
                     sock.close()   
                     return
                 if self.state == "freeze":
-                    logging.info("User frooze their screen")
+                    logging.info("User freezed their screen")
+                    notify.Notification.new("Freezing", "Your screen will freeze in 10 seconds.", None).show()
                     command = "freezee," + socket.gethostname()
+                    time.sleep(10)
                     sock.send(command.encode('ascii'))
                     status = sock.recv(1024)
                     if status.decode('ascii') == "paused":
