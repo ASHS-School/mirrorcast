@@ -6,6 +6,7 @@ from displays import Displays
 from audio import Audio
 from tube import Tube
 from media import Media
+from dvd import Dvd
 from tkinter import *
 from tkinter.filedialog import askopenfilename
 #from twisted.web.server import Site
@@ -51,7 +52,7 @@ class TrayMenu:
         self.media_sub.append(item_file)
         item_dvd = gtk.MenuItem('Play DVD')
         item_dvd.connect('activate', self.dvd)
-        self.media_sub.append(item_dvd)
+        #self.media_sub.append(item_dvd)
         item_youtube = gtk.MenuItem('Youtube URL')
         item_youtube.connect('activate', self.youtube)
         self.media_sub.append(item_youtube)
@@ -310,8 +311,10 @@ class TrayMenu:
             newpath = r'/tmp/media' 
             if not os.path.exists(newpath):
                 os.makedirs(newpath)
-            if os.path.isfile(file):  
-                os.symlink(str(file), "/tmp/media/" + str(os.path.basename(file)))
+            if os.path.isfile(file):
+                if not os.path.isfile(newpath + '/' + os.path.basename(file)):
+                    os.symlink(str(file), "/tmp/media/" + os.path.basename(file))
+                    
             self.ffmpeg = subprocess.Popen(["http-server", "/tmp/media", "-p", "8090"], stdout=subprocess.PIPE)
             time.sleep(2)
             self.send_cmd("media-start," + os.path.basename(file) + ",")
@@ -320,7 +323,7 @@ class TrayMenu:
         
             
     def dvd(self, w):
-        if self.state == "casting":
+        ''''if self.state == "casting":
             notify.init("mirrorMenu")
             notify.Notification.new("Error", "Please stop mirroring before you try to use this feature", None).show()
         else:
@@ -336,11 +339,11 @@ class TrayMenu:
             mirror_logger.info("User connected to " + self.hosts.receiver + " to stream DVD")
             if self.vlc != None:
                 if self.vlc.poll() == None:
-                    self.vlc.terminate()
-            self.vlc = subprocess.Popen(["vlc", "-q", "dvdsimple://", "--sout-avcodec-strict=-2", "--sout-x264-preset", "ultrafast", "--sout=#transcode{vcodec=h264,vb=2000,scale=Auto}:duplicate{dst=http{mux=ts,dst=:8090/video},dst=display}", ":sout-keep"], stdout=subprocess.PIPE)
-            time.sleep(3)            
-            self.send_cmd("media-start,")
-            ui = mediaui(self.hosts.receiver)
+                    self.vlc.terminate()'''
+            #Use lsdvd to retreive keys for encrypted dvd's
+        subprocess.call("lsdvd", shell=True)
+            #self.send_cmd("dvd-start,")
+        ui = dvdui(self.hosts.receiver)
             
     def youtube(self, w):
         if self.state == "casting":
@@ -415,6 +418,20 @@ class mediaui():
     def __init__(self, receiver):
         self.root=Tk()
         self.m=Media(self.root)
+        self.m.receiver=receiver
+        self.root.title("Receiver Controls")
+        self.root.protocol("WM_DELETE_WINDOW", self.on_exit)
+        self.root.mainloop()
+        
+    def on_exit(self):
+        self.m.on_closing()
+        self.root.destroy()
+        #reactor.stop()
+
+class dvdui():
+    def __init__(self, receiver):
+        self.root=Tk()
+        self.m=Dvd(self.root)
         self.m.receiver=receiver
         self.root.title("Receiver Controls")
         self.root.protocol("WM_DELETE_WINDOW", self.on_exit)
