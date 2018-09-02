@@ -1,0 +1,12 @@
+#!/bin/sh
+#Post Install, execute permissions for scripts
+
+#chmod +x /opt/mirrorcast/monitors.sh
+#chmod +x /opt/mirrorcast/mirrorcast-autoupdater.sh
+
+#cp /opt/mirrorcast/receivers ~/receivers
+#cp /tmp/receivers.back ~/receivers
+#install http-server
+npm install http-server -g
+#TO DO - Set up nbd server here
+exit 0
