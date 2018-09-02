@@ -72,7 +72,7 @@ Install python-mpv
 ```
 npm3 python-mpv
 ```
-<p>Add the following to /etc/rc.local</p>
+Add the following to /etc/rc.local
 ```
 python3 /path/to/mirrorcast_server_pi.py
 modprobe nbd
