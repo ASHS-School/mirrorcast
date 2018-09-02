@@ -9,8 +9,8 @@ npm install http-server -g
 
 #Set up nbd server
 echo "Editing permissions of nbd-server, if you use this for something else you might want to change this manually."
-sed -i 's,user,\# &,' config
-sed -i 's,group,\# &,' config
+sed -i 's,user,\# &,' /etc/nbd-server/config
+sed -i 's,group,\# &,' /etc/nbd-server/config
 sudo systemctl enable nbd-server
 sudo service nbd-server restart
 exit 0
