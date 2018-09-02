@@ -1,4 +1,4 @@
-#Mirrorcast - Open Source Alternative to Chromecast
+# Mirrorcast - Open Source Alternative to Chromecast
 
 The idea is to replicate what chromecast can do in regards to screen mirroring and streaming media to a remote display. 
 Google chromes screen mirroring feature works well when used with a receiver such as chromecast but this is a proprietary solution and audio does not work for desktop mirroring on some operating systems.
