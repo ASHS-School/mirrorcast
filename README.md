@@ -29,7 +29,8 @@ To acheive this we will use existing FOSS software such as ffmpeg, ffplay, VLC p
 <ul><li>Create Windows client application</li>
 <li>Create MacOs client application</li>
 <li>Create Android client application</li>
-<li>Other bug fixes; additionial features and improvements</li></ul>
+<li>Other bug fixes; additionial features and improvements</li>
+<li>Improve this documentation.</ul>
 
 
 <h2>How to use</h2>
@@ -77,12 +78,38 @@ Add the following to /etc/rc.local
 python3 /path/to/mirrorcast_server_pi.py
 modprobe nbd
 ```
-If you want to be able to play DVD's then you will need the mpeg2 license from the pi store and mpv compiled with mmal and libmpv support(I will share pre-compiled ones at a later stage)
+If you want to be able to play DVD's then you will need the mpeg2 license from the pi store and mpv compiled with mmal and libmpv support, you will also need libass and ffmpeg with mmal support.
+
+If you do not want to compile them yourself then I have some pre-compiled packages I compiled for stretch that you can try but first lets make sure the pi is up to date(including firmware)
+```
+sudo apt-get update
+sudo apt-get upgrade
+sudo rpi-update
+```
+Create links to libraries
+```
+sudo ln -s /usr/lib/arm-linux-gnueabihf/pkgconfig/glesv2.pc /opt/vc/lib/pkgconfig/
+sudo ln -s /usr/lib/arm-linux-gnueabihf/pkgconfig/egl.pc /opt/vc/lib/pkgconfig/
+sudo ln -s /usr/lib/arm-linux-gnueabihf/libGLESv2.so /opt/vc/lib/
+sudo ln -s /usr/lib/arm-linux-gnueabihf/libEGL.so /opt/vc/lib/
+sudo ldconfig
+```
+Download for pre-compiled packages.
+```
+mkdir mpv-mmal && cd mpv-mmal
+wget https://3djakedesigns.org/debian/stretch/fdk-aac_0.1.5-1_armhf.deb https://3djakedesigns.org/debian/stretch/ffmpeg_20180831-1_armhf.deb https://3djakedesigns.org/debian/stretch/lame_3.100-1_armhf.deb https://3djakedesigns.org/debian/stretch/libass_0.14.0-1_armhf.deb https://3djakedesigns.org/debian/stretch/libvpx_1.6.1-1_armhf.deb https://3djakedesigns.org/debian/stretch/mpv_0.29.0-1_armhf.deb https://3djakedesigns.org/debian/stretch/opus_1.2.1-1_armhf.deb https://3djakedesigns.org/debian/stretch/x264-snapshot-20180125-2245_20180125-1_armhf.deb
+```
+Install the packages and prevent apt from replacing.
+```
+sudo apt-mark hold libass ffmpeg fdk-acc libvpx mpv opus x264 lame
+sudo dpkg -i *.deb
+sudo apt-get -f install
+```
 Restart the pi
 
 
 
-By default the mirrorcast server uses udp port 8090 and tcp port 8092. If the client wants to stream files, then TCP port 8090 needs to be open on the client side. For DVD's nbd port needs to be open on client side too.
+By default the Mirrorcast server uses udp port 8090 and tcp port 8092. If the client wants to stream files, then TCP port 8090 needs to be open on the client side. For DVD's nbd port needs to be open on client side too.
 
 To start mirroring your desktop, start the mirrorcast application, it will add an applet to your toolbar, first select the display you want to mirror(if you have more than one), then select your receiver, then click "start mirroring"
 
