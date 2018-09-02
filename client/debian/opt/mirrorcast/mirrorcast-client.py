@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.6.8b'''
+Mirrorcast Version 0.7.0b'''
 import socket, gi, subprocess, time, os, threading, logging, dbus,logging.handlers
 from hosts import Hosts as hosts
 from displays import Displays
@@ -52,7 +52,7 @@ class TrayMenu:
         self.media_sub.append(item_file)
         item_dvd = gtk.MenuItem('Play DVD')
         item_dvd.connect('activate', self.dvd)
-        #self.media_sub.append(item_dvd)
+        self.media_sub.append(item_dvd)
         item_youtube = gtk.MenuItem('Youtube URL')
         item_youtube.connect('activate', self.youtube)
         self.media_sub.append(item_youtube)
@@ -323,7 +323,7 @@ class TrayMenu:
         
             
     def dvd(self, w):
-        ''''if self.state == "casting":
+        if self.state == "casting":
             notify.init("mirrorMenu")
             notify.Notification.new("Error", "Please stop mirroring before you try to use this feature", None).show()
         else:
@@ -337,12 +337,9 @@ class TrayMenu:
                 mirror_logger.warning("Failed to connect to " + self.hosts.receiver)
                 return
             mirror_logger.info("User connected to " + self.hosts.receiver + " to stream DVD")
-            if self.vlc != None:
-                if self.vlc.poll() == None:
-                    self.vlc.terminate()'''
-            #Use lsdvd to retreive keys for encrypted dvd's
+        #Use lsdvd to retreive keys for encrypted dvd's, requires libdvd-pkg and lsdvd
         subprocess.call("lsdvd", shell=True)
-            #self.send_cmd("dvd-start,")
+        self.send_cmd("dvd-start,")
         ui = dvdui(self.hosts.receiver)
             
     def youtube(self, w):
