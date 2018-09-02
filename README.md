@@ -69,7 +69,7 @@ sudo systemctl enable nbd-server
 <p>First install omxplayer, youtube-dl(from github) and python-omxplayer-wrapper for python3.</p>
 <p>Then download mirrorcast_server_pi.py and omx.py from the server folder or just clone the whole repo.</p>
 <p>Install python-mpv</p>
-```sh 
+``` 
 npm3 python-mpv
 ```
 <p>Add the following to /etc/rc.local</p>
