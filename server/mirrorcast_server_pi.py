@@ -181,10 +181,10 @@ def connection():
                         tube.dvdplayer.quit(0)
                 elif command[0] == "dvd-n-chapt" and tube.dvdplayer != None:
                         tube.dvdplayer._set_property("chapter", tube.dvdplayer._get_property('chapter') + 1)
-                        tube.dvdplayer.command('show_text', "Next Chapter")
+                        tube.dvdplayer.command('show_text', "Next Chapter " + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("time-pos")))) + "/" + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("duration")))))
                 elif command[0] == "dvd-p-chapt" and tube.dvdplayer != None:
                         tube.dvdplayer._set_property("chapter", tube.dvdplayer._get_property('chapter') - 1)
-                        tube.dvdplayer.command('show_text', "Prevoius Chapter")
+                        tube.dvdplayer.command('show_text', "Prevoius Chapter " + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("time-pos")))) + "/" + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("duration")))))
                 elif command[0] == "dvd-vol" and tube.dvdplayer != None:
                         tube.dvdplayer._set_property("volume", int(command[2]))
                         tube.dvdplayer.command('show_text', "Volume is now at " + str(int(command[2])) + "%")
