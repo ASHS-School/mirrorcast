@@ -66,16 +66,19 @@ sudo systemctl enable nbd-server
 
 <h2>Setting up the raspberry pi server/receiver.</h2>
 First install omxplayer, youtube-dl(from github) and python-omxplayer-wrapper for python3.
-Download mirrorcast_server_pi.py and omx.py from the server folder or just clone the whole repo.
+Then download mirrorcast_server_pi.py and omx.py from the server folder or just clone the whole repo.
 Install python-mpv 
 ```sh 
 npm3 python-mpv
 ```
-If you want to be able to play DVD's then you will need the mpeg2 license from the pi store and mpv compiled with mmal and libmpv support(I will share pre-compiled ones at a later stage)
 Add the following to /etc/rc.local
 ```
 python3 /path/to/mirrorcast_server_pi.py
+modprobe nbd
 ```
+If you want to be able to play DVD's then you will need the mpeg2 license from the pi store and mpv compiled with mmal and libmpv support(I will share pre-compiled ones at a later stage)
+Restart the pi
+
 
 
 By default the mirrorcast server uses udp port 8090 and tcp port 8092. If the client wants to stream files, then TCP port 8090 needs to be open on the client side. For DVD's nbd port needs to be open on client side too.
