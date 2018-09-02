@@ -1,9 +1,9 @@
 Package: mirrorcast
-Version: 0.6.8b
+Version: 0.7.0b
 Section: base
 Priority: optional
 Architecture: amd64 
-Depends: python3 (>= 3.0.0), ffmpeg (>= 7:0.0.0), vlc (>= 2.2.0), python3-tk (>= 3.0.0), npm (>= 3.0.0), libappindicator3 (>= 12.0.0), libappindicator3-dev (>= 12.0.0), nbd-server (>= 3.10.0)
+Depends: python3 (>= 3.0.0), ffmpeg (>= 7:0.0.0), vlc (>= 2.2.0), python3-tk (>= 3.0.0), npm (>= 3.0.0), libappindicator3-1 (>= 12.0.0), libappindicator3-dev (>= 12.0.0), nbd-server (>= 3.10.0)
 Maintainer: jwarren@ashs.school.nz, bpatel@ashs.school.nz
 Description: Mirrorcast Client
  FOSS solution for screen mirroring.
