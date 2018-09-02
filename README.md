@@ -47,23 +47,6 @@ If you are missing dependencies install them with:
 sudo apt-get update && sudo apt-get -f install
 ```
 Then add/edit the hostnames or ip addresses of your receivers in /opt/mirrorcast/receivers (if the receiver is widescreen then put '16:9' as the aspect)
-If you want to be able to play DVD's then you need to edit /etc/nbd-server/config and add your dvd drive to it.
-Here is my config file
-```
-[generic]
-        #user = root
-        #group = cdrom
-        includedir = /etc/nbd-server/conf.d
-        allowlist = true
-[dvd]
-        exportname = /dev/sr0
-        readonly = true
-```
-Then you will need to enable and restart the nbd server
-```sh
-sudo service nbd-server restart
-sudo systemctl enable nbd-server
-```
 
 <h2>Setting up the raspberry pi server/receiver.</h2>
 
