@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 #Mirrorcast Server for Raspberry Pi.
 #Please use python3 and not 2.7, 2.7 will cause problems
-
-import socket,subprocess,time,logging, threading
+#Mirrorcast Server Version 0.7.0b
+import socket,subprocess,time,logging, threading, os, datetime
 from omx import Omx
 
 logging.basicConfig(filename='/var/log/mirrorcast_server.log',level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
@@ -14,6 +14,9 @@ connected = ""
 ready = False
 playing = False
 tube = None
+sub = 0
+audio = 0
+#subprocess.call("modprobe nbd",shell=True)
 
 def connection():
     retries = 10
@@ -135,6 +138,8 @@ def connection():
                 if tube.player != None:
                     kill(tube.player)
                     tube.player = None
+                if tube.dvdplayer != None:
+                    tube.dvdplayer.quit()
                 time.sleep(1)
                 client.send("ready".encode('ascii'))
                 
@@ -144,6 +149,63 @@ def connection():
                     logging.info("Playing " + command[1])
                 else:
                     logging.info("Error Playing " + command[1])
+            elif "dvd" in command[0] and connected == "":
+                if command[0] == "dvd-start" and connected == "":
+                    logging.info(connected + "is attempting to play a DVD")
+                    subprocess.call("tvservice -p &",shell=True)
+                    newpath = r'/tmp/DVD' 
+                    if not os.path.exists(newpath):
+                        os.makedirs(newpath)
+                    subprocess.call("umount /tmp/DVD",shell=True)
+                    subprocess.call("nbd-client -d /dev/nbd0",shell=True)
+                    subprocess.call("nbd-client " + str(address[0]) + " -name dvd /dev/nbd0 -b 2048", shell=True)
+                    subprocess.call("mount /dev/nbd0 /tmp/DVD",shell=True)
+                    tube.start_dvd()
+                    sub = 0
+                    #Get the amount of audio tracks and subtitles avaible on DVD(May cause issues when more than 1 movie on DVD)
+                    tube.get_tracks()
+                elif command [0] == "dvd-pause" and tube.dvdplayer != None:
+                    if not tube.dvdplayer._get_property("pause"):
+                        tube.dvdplayer.command('show_text', "Paused")
+                        tube.dvdplayer._set_property("pause", True)
+                    else:
+                        tube.dvdplayer._set_property("pause", False)
+                        tube.dvdplayer.command('show_text', "Resumed")
+                elif command[0] == "dvd-forward" and tube.dvdplayer != None:
+                        tube.dvdplayer.seek(30)
+                        tube.dvdplayer.command('show_text', "Seeking 30 seconds " + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("time-pos")))) + "/" + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("duration")))))
+                elif command[0] == "dvd-back" and tube.dvdplayer != None:
+                        tube.dvdplayer.seek(-30)
+                        tube.dvdplayer.command('show_text', "Seeking back 30 seconds " + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("time-pos")))) + "/" + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("duration")))))
+                elif command[0] == "dvd-stop" and tube.dvdplayer != None:
+                        tube.dvdplayer.quit(0)
+                elif command[0] == "dvd-n-chapt" and tube.dvdplayer != None:
+                        tube.dvdplayer._set_property("chapter", tube.dvdplayer._get_property('chapter') + 1)
+                        tube.dvdplayer.command('show_text', "Next Chapter")
+                elif command[0] == "dvd-p-chapt" and tube.dvdplayer != None:
+                        tube.dvdplayer._set_property("chapter", tube.dvdplayer._get_property('chapter') - 1)
+                        tube.dvdplayer.command('show_text', "Prevoius Chapter")
+                elif command[0] == "dvd-vol" and tube.dvdplayer != None:
+                        tube.dvdplayer._set_property("volume", int(command[2]))
+                        tube.dvdplayer.command('show_text', "Volume is now at " + str(int(command[2])) + "%")
+                elif command[0] == "dvd-track-down" and tube.dvdplayer != None:
+                        tube.dvdplayer.cycle("audio", "down")
+                        tube.dvdplayer.command('show_text', "Previous Audio Track")
+                elif command[0] == "dvd-track-up" and tube.dvdplayer != None:
+                        tube.dvdplayer.cycle("audio", "up")
+                        tube.dvdplayer.command('show_text', "Next Audio Track")
+                elif command[0] == "dvd-subtitle" and tube.dvdplayer != None:
+                        tube.get_tracks()
+                        if tube.subs >= 1:
+                            sub += 1
+                            tube.dvdplayer.command('show_text', "Subtitle Track: " + str(sub))
+                            if sub >= tube.subs:
+                                tube.dvdplayer._set_property("sub", 0)
+                                sub = 0
+                            else:
+                                tube.dvdplayer.cycle("sub", "up")
+                        else:
+                            tube.dvdplayer.command('show_text', "No Subtitles Found")
             elif command[0] == "tu-media" and connected == "":
                 logging.info(connected + " is trying to stream a youtube video")
                 subprocess.call("tvservice -p &",shell=True)
