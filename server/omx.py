@@ -12,7 +12,8 @@ class Omx():
         self.dvdplayer = None
         self.subs = 0
         self.audio_tracks = 0
-       
+        self.titles = 0
+        
     def youtube(self):
         proc = subprocess.Popen(['youtube-dl', '-g', '-f', 'mp4', self.url], stdout=subprocess.PIPE)
         url = proc.stdout.read()
@@ -45,10 +46,13 @@ class Omx():
         self.dvdplayer['osd-on-seek'] = 'msg-bar'
         self.dvdplayer['osd-level'] = '1'
         self.dvdplayer['osd-duration'] = '8000'
+        self.dvdplayer['loop-file'] = 'no'
+        self.dvdplayer['end'] = '-5'
         self.dvdplayer['osd-playing-msg'] = 'Now Playing Your DVD'
         self.dvdplayer.play('/tmp/DVD/')
         self.audio_tracks = 0
         self.subs = 0
+        self.titles = 0
         #self.dvdplayer.play("/home/pi/mirrorcast/server/Big Buck Bunny-YE7VzlLtp-4.mp4")
         return True
         
@@ -56,6 +60,7 @@ class Omx():
         #Get the amount of audio tracks and subtitles avaible on DVD(May cause issues when more than 1 movie on DVD)
         self.subs = 0
         self.audio_tracks = 0
+        print(self.dvdplayer._get_property('disc-titles', 'length'))
         for item in self.dvdplayer._get_property("track-list"):
             if item['type'] == 'sub':
                 self.subs += 1
