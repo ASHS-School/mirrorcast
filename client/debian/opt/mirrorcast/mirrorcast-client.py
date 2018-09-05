@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.7.0b'''
+Mirrorcast Version 0.7.1b'''
 import socket, gi, subprocess, time, os, threading, logging, dbus,logging.handlers
 from hosts import Hosts as hosts
 from displays import Displays
@@ -338,7 +338,12 @@ class TrayMenu:
                 return
             mirror_logger.info("User connected to " + self.hosts.receiver + " to stream DVD")
         #Use lsdvd to retreive keys for encrypted dvd's, requires libdvd-pkg and lsdvd
-        subprocess.call("lsdvd", shell=True)
+        try:
+            subprocess.check_output("lsdvd", shell=True)
+        except:
+            notify.init("mirrorMenu")
+            notify.Notification.new("Error", "Please insert a DVD first or wait for DVD to load.", None).show()
+            return
         self.send_cmd("dvd-start,")
         ui = dvdui(self.hosts.receiver)
             
