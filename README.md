@@ -84,7 +84,7 @@ wget https://3djakedesigns.org/debian/stretch/fdk-aac_0.1.5-1_armhf.deb https://
 ```
 Install the packages and prevent apt from replacing.
 ```
-sudo apt-mark hold libass ffmpeg fdk-acc libvpx mpv opus x264 lame
+sudo apt-mark hold libass ffmpeg fdk-acc libvpx mpv opus x264 lame libass5 libvpx1 opus-tools
 sudo dpkg -i *.deb
 sudo apt-get -f install
 ```
