@@ -156,10 +156,10 @@ def connection():
                     newpath = r'/tmp/DVD' 
                     if not os.path.exists(newpath):
                         os.makedirs(newpath)
-                    subprocess.call("umount /tmp/DVD",shell=True)
+                    #subprocess.call("umount /tmp/DVD",shell=True)
                     subprocess.call("nbd-client -d /dev/nbd0",shell=True)
-                    subprocess.call("nbd-client " + str(address[0]) + " -name dvd /dev/nbd0 -b 2048", shell=True)
-                    subprocess.call("mount /dev/nbd0 /tmp/DVD",shell=True)
+                    subprocess.call("nbd-client " + str(address[0]) + " -name dvd /dev/nbd0 -b 4096", shell=True)
+                    #subprocess.call("mount /dev/nbd0 /tmp/DVD",shell=True)
                     tube.start_dvd()
                     sub = 0
                     #Get the amount of audio tracks and subtitles avaible on DVD(May cause issues when more than 1 movie on DVD)
@@ -178,7 +178,8 @@ def connection():
                         tube.dvdplayer.seek(-30)
                         tube.dvdplayer.command('show_text', "Seeking back 30 seconds " + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("time-pos")))) + "/" + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("duration")))))
                 elif command[0] == "dvd-stop" and tube.dvdplayer != None:
-                        tube.dvdplayer.quit(0)
+                        tube.dvdplayer.quit()
+                        del tube.dvdplayer
                 elif command[0] == "dvd-n-chapt" and tube.dvdplayer != None:
                         tube.dvdplayer._set_property("chapter", tube.dvdplayer._get_property('chapter') + 1)
                         tube.dvdplayer.command('show_text', "Next Chapter " + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("time-pos")))) + "/" + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("duration")))))
@@ -206,6 +207,8 @@ def connection():
                                 tube.dvdplayer.cycle("sub", "up")
                         else:
                             tube.dvdplayer.command('show_text', "No Subtitles Found")
+                else:
+                    print(tube.dvdplayer)
             elif command[0] == "tu-media" and connected == "":
                 logging.info(connected + " is trying to stream a youtube video")
                 subprocess.call("tvservice -p &",shell=True)
