@@ -49,7 +49,9 @@ class Omx():
         self.dvdplayer['loop-file'] = 'no'
         self.dvdplayer['end'] = '-5'
         self.dvdplayer['osd-playing-msg'] = 'Now Playing Your DVD'
-        self.dvdplayer.play('/tmp/DVD/')
+        self.dvdplayer['dvd-device'] = '/dev/nbd0'
+        #self.dvdplayer.play('/tmp/DVD/')
+        self.dvdplayer.play('dvd://')
         self.audio_tracks = 0
         self.subs = 0
         self.titles = 0
