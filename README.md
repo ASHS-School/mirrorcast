@@ -3,15 +3,15 @@
 The idea is to replicate what chromecast can do in regards to screen mirroring and streaming media to a remote display. 
 Google chromes screen mirroring feature works well when used with a receiver such as chromecast but this is a proprietary solution and audio does not work for desktop mirroring on some operating systems.
 
-This application is ideal for wireless projection, no more cables, just send your desktop or media over the network to a receiver
-
 At the moment, there is only a client for Debian/Ubuntu Operating systems. There is a server/receiver application for raspberry pi
 
 Mirrorcast aims to be a low latency screen mirroring solution with high quality video and audio at 25-30fps, the later is why we will not use something like VNC.
 
 Mirrorcast uses up about the same amount of system resources as google chromes cast feature. The delay is less than 1 second on most networks.
 
-To acheive this we will use existing FOSS software such as ffmpeg, ffplay, VLC player and omxplayer
+To achieve this we will use existing FOSS software such as ffmpeg, mpv, and omxplayer.
+
+At the moment you can stream your screen(with audio), play youtube videos, play media files and DVD's.
 
 <p>Video Demo <a href="https://www.youtube.com/embed/23fGNmvI6zE">https://www.youtube.com/embed/23fGNmvI6zE</a> </p>
 
@@ -63,13 +63,13 @@ modprobe nbd
 ```
 If you want to be able to play DVD's then you will need the mpeg2 license from the pi store and mpv compiled with mmal and libmpv support, you will also need libass and ffmpeg with mmal support.
 
-If you do not want to compile them yourself then I have some pre-compiled packages I compiled for stretch that you can try but first lets make sure the pi is up to date(including firmware)
+If you do not want to compile them yourself then I have some pre-compiled packages I compiled for Respbian Stretch(Respbian 9) that you can try but first lets make sure the pi is up to date(including firmware)
 ```
 sudo apt-get update
 sudo apt-get upgrade
 sudo rpi-update
 ```
-Create links to libraries
+Create links to libraries (If they do not exist then you need to install libgles2-mesa and libsdl2-dev)
 ```
 sudo ln -s /usr/lib/arm-linux-gnueabihf/pkgconfig/glesv2.pc /opt/vc/lib/pkgconfig/
 sudo ln -s /usr/lib/arm-linux-gnueabihf/pkgconfig/egl.pc /opt/vc/lib/pkgconfig/
@@ -77,7 +77,7 @@ sudo ln -s /usr/lib/arm-linux-gnueabihf/libGLESv2.so /opt/vc/lib/
 sudo ln -s /usr/lib/arm-linux-gnueabihf/libEGL.so /opt/vc/lib/
 sudo ldconfig
 ```
-Download for pre-compiled packages.
+Download for pre-compiled packages. NOTE: I have not tested these on Jessie (Raspbian 8) but they might work.
 ```
 mkdir mpv-mmal && cd mpv-mmal
 wget https://3djakedesigns.org/debian/stretch/fdk-aac_0.1.5-1_armhf.deb https://3djakedesigns.org/debian/stretch/ffmpeg_20180831-1_armhf.deb https://3djakedesigns.org/debian/stretch/lame_3.100-1_armhf.deb https://3djakedesigns.org/debian/stretch/libass_0.14.0-1_armhf.deb https://3djakedesigns.org/debian/stretch/libvpx_1.6.1-1_armhf.deb https://3djakedesigns.org/debian/stretch/mpv_0.29.0-1_armhf.deb https://3djakedesigns.org/debian/stretch/opus_1.2.1-1_armhf.deb https://3djakedesigns.org/debian/stretch/x264-snapshot-20180125-2245_20180125-1_armhf.deb
@@ -88,11 +88,18 @@ sudo apt-mark hold libass ffmpeg fdk-acc libvpx mpv opus x264 lame
 sudo dpkg -i *.deb
 sudo apt-get -f install
 ```
+If you want to play DVD's then you need to install libdvd-pkg
+```
+sudo apt-get install libdvd-pkg
+sudo dpkg-reconfigure libdvd-pkg
+```
+For DVD's you will also need to buy an mpeg2 license from the pi store <a href="https://www.raspberrypi.com/mpeg-2-license-key/">https://www.raspberrypi.com/mpeg-2-license-key/</a> </p>
+
 Restart the pi
 
 
 
-By default the Mirrorcast server uses udp port 8090 and tcp port 8092. If the client wants to stream files, then TCP port 8090 needs to be open on the client side. For DVD's nbd port needs to be open on client side too.
+By default the Mirrorcast server uses udp port 8090 and tcp port 8092. If the client wants to stream files, then TCP port 8090 needs to be open on the client side. For DVD's, the default nbd-server port needs to be open on client side too.
 
 To start mirroring your desktop, start the mirrorcast application, it will add an applet to your toolbar, first select the display you want to mirror(if you have more than one), then select your receiver, then click "start mirroring"
 
