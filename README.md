@@ -77,7 +77,9 @@ sudo ln -s /usr/lib/arm-linux-gnueabihf/libGLESv2.so /opt/vc/lib/
 sudo ln -s /usr/lib/arm-linux-gnueabihf/libEGL.so /opt/vc/lib/
 sudo ldconfig
 ```
-Download for pre-compiled packages. NOTE: I have not tested these on Jessie (Raspbian 8) but they might work.
+Download for pre-compiled packages. 
+NOTE: I have not tested these on Jessie (Raspbian 8) but they might work.
+NOTE: These packages will not install dependencies(I plan to make new ones that do).
 ```
 mkdir mpv-mmal && cd mpv-mmal
 wget https://3djakedesigns.org/debian/stretch/fdk-aac_0.1.5-1_armhf.deb https://3djakedesigns.org/debian/stretch/ffmpeg_20180831-1_armhf.deb https://3djakedesigns.org/debian/stretch/lame_3.100-1_armhf.deb https://3djakedesigns.org/debian/stretch/libass_0.14.0-1_armhf.deb https://3djakedesigns.org/debian/stretch/libvpx_1.6.1-1_armhf.deb https://3djakedesigns.org/debian/stretch/mpv_0.29.0-1_armhf.deb https://3djakedesigns.org/debian/stretch/opus_1.2.1-1_armhf.deb https://3djakedesigns.org/debian/stretch/x264-snapshot-20180125-2245_20180125-1_armhf.deb
