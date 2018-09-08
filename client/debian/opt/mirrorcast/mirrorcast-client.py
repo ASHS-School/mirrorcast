@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.7.1b'''
+Mirrorcast Version 0.7.2b'''
 import socket, gi, subprocess, time, os, threading, logging, dbus,logging.handlers
 from hosts import Hosts as hosts
 from displays import Displays
@@ -9,9 +9,6 @@ from media import Media
 from dvd import Dvd
 from tkinter import *
 from tkinter.filedialog import askopenfilename
-#from twisted.web.server import Site
-#from twisted.web.static import File
-#from twisted.internet import reactor, endpoints
 gi.require_version('AppIndicator3', '0.1')
 gi.require_version('Gtk', '3.0')
 gi.require_version('Gtk', '3.0')
@@ -27,7 +24,6 @@ handler = logging.handlers.SysLogHandler(address = '/dev/log')
 formatter = logging.Formatter(' mirrorcast - %(name)s -  %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 mirror_logger.addHandler(handler)
-#mirror_logger.basicConfig(filename='/opt/mirrorcast/mirrorcast.log',level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
 
 class TrayMenu:
     def __init__(self):
@@ -63,6 +59,7 @@ class TrayMenu:
         self.menu.append(item_freeze)
         item_update = gtk.MenuItem('Update Mirrorcast')
         item_update.connect('activate', self.update)
+        #Update feature is disabled for now
         #self.menu.append(item_update)
         item_quit = gtk.MenuItem('Quit')
         item_quit.connect('activate', self.quit)
@@ -85,7 +82,7 @@ class TrayMenu:
         #Add receivers to menu
         self.list_receivers.append(gtk.RadioMenuItem('None'))
         for ind, i in enumerate(self.hosts.receivers):
-            #allow user to sort their receivers into sublists
+            #aAlow user to sort their receivers into organised sublists
             if i['aspect'] == "sub":
                 self.sortedMenu.append(gtk.Menu())
                 sortSub.append(gtk.MenuItem(i['host']))
@@ -144,11 +141,14 @@ class TrayMenu:
             notify.Notification.new("Connecting to Receiver", "Attempting to establish connection to " + self.hosts.receiver, None).show()
             mirror_logger.info("User is trying to connect to " + self.hosts.receiver)
             #If we cannot connect to the receiver
-            if self.connect("play,") == False:
-                notify.init("mirrorMenu")
+            try:
+                if self.connect("play,") == False:
+                    notify.init("mirrorMenu")
+                    notify.Notification.new("Connection Error", "Could not connect to" + self.hosts.receiver + ". please try again and if problem persists then please contact your system administrator.", None).show()
+                    mirror_logger.warning("Failed to connect to " + self.hosts.receiver)
+                    return
+            except:
                 notify.Notification.new("Connection Error", "Could not connect to" + self.hosts.receiver + ". please try again and if problem persists then please contact your system administrator.", None).show()
-                mirror_logger.warning("Failed to connect to " + self.hosts.receiver)
-                return
             #Create and start loop that checks if receiver can still be reached
             mirror_logger.info("User connected to " + self.hosts.receiver)
             w.set_label("Stop Mirroring")
@@ -306,8 +306,6 @@ class TrayMenu:
             select.destroy()
             if file == () or file == None or file == "":
                 return
-            #dirpath = os.path.dirname(os.path.realpath(file))
-            #resource = File(dirpath)
             newpath = r'/tmp/media' 
             if not os.path.exists(newpath):
                 os.makedirs(newpath)
@@ -369,7 +367,7 @@ class TrayMenu:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((self.hosts.receiver, 8092))
-            sock.settimeout(None)
+            sock.settimeout(30)
             sock.send(command.encode('ascii'))
             while True:
                 status = sock.recv(8024)
