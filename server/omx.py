@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-#Mirrorcast Server Version 0.7.0b
+#Mirrorcast Server Version 0.7.2b
 
-from omxplayer import OMXPlayer
+from omxplayer.player import OMXPlayer
 import mpv
 import subprocess,time
 
@@ -13,6 +13,7 @@ class Omx():
         self.subs = 0
         self.audio_tracks = 0
         self.titles = 0
+        return
         
     def youtube(self):
         proc = subprocess.Popen(['youtube-dl', '-g', '-f', 'mp4', self.url], stdout=subprocess.PIPE)
@@ -23,16 +24,13 @@ class Omx():
         return True
 
     def start_media(self, host, file):
-        #file = "The Pirates of Silicon Valley.avi"
         address = "http://" + str(host) + ":8090/" + file
-        #address = address.replace(" ", "%20")
         self.player = OMXPlayer(address.replace(" ", "%20"), args=['-o', 'hdmi'])
-        #self.player = OMXPlayer("/home/pi/Videos/Song of the Kauri.mp4", args=['-o', 'hdmi'])
         i = 0
         while not self.player.is_playing():
-            time.sleep(2)
+            time.sleep(1)
             i+=1
-            if i >= 60:
+            if i >= 40:
                 break
             return False
         return True
@@ -50,12 +48,10 @@ class Omx():
         self.dvdplayer['end'] = '-5'
         self.dvdplayer['osd-playing-msg'] = 'Now Playing Your DVD'
         self.dvdplayer['dvd-device'] = '/dev/nbd0'
-        #self.dvdplayer.play('/tmp/DVD/')
         self.dvdplayer.play('dvd://')
         self.audio_tracks = 0
         self.subs = 0
         self.titles = 0
-        #self.dvdplayer.play("/home/pi/mirrorcast/server/Big Buck Bunny-YE7VzlLtp-4.mp4")
         return True
         
     def get_tracks(self):
@@ -68,7 +64,9 @@ class Omx():
                 self.subs += 1
             if item['type'] == 'audio':
                 self.audio_tracks += 1
+        return
     
     def mirror(self):
         self.player = OMXPlayer("udp://0.0.0.0:8090?listen", args=['-o', 'hdmi', '--lavfdopts', 'probesize:8000', '--timeout', '0', '--threshold', '0'])
+        return
     
