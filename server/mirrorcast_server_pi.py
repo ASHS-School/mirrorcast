@@ -16,7 +16,6 @@ playing = False
 tube = None
 sub = 0
 audio = 0
-#subprocess.call("modprobe nbd",shell=True)
 
 def connection():
     retries = 10
@@ -45,7 +44,7 @@ def connection():
             if connected != command[1] and connected != "":              
                 client.send("busy".encode('ascii'))
                 logging.info(str(command[1]) + " tried to connect but " + str(connected) + " is already connected")
-            #User started casting/mirroring or reconnected
+            #User started Casting/Mirroring or has Reconnected
             if command[0] == "play":
                 if connected == "":
                     connected = command[1]
@@ -55,9 +54,13 @@ def connection():
                     timestamp = time.localtime()
                     if tube.player != None:
                         kill(tube.player)
-                    subprocess.call("tvservice -p &",shell=True)   
+                    if tube.dvdplayer != None:
+                        tube.dvdplayer.quit()
+                    subprocess.call("tvservice -p &",shell=True)
+                    #Set up omxplayer to mirror screen.
                     tube.mirror()
-                    time.sleep(1)
+                    #Wait for omxplayer to load stream.
+                    time.sleep(5)
                     #Inform client that it is now ok to start ffmpeg
                     client.send("ready".encode('ascii'))
                     
@@ -69,11 +72,11 @@ def connection():
                 kill(tube.player)
                 #subprocess.call("tvservice -o &",shell=True)
                 
-            #Client wants to freeze the screen
+            #Client wants to freeze the screen. There are 2 for backwars compatibility
             elif command[0] == "freeze" and connected == command[1]:     
                 ready = False
                 connected = ""
-                logging.info(connected + " has froozen their screen")
+                logging.info(connected + " has freezed their screen")
                 #client.send("paused".encode('ascii'))
             elif command[0] == "freezee" and connected == command[1]:     
                 ready = False
@@ -81,7 +84,7 @@ def connection():
                 if tube.player != None:
                     time.sleep(1)
                     tube.player.pause()
-                logging.info(connected + " has froozen their screen")
+                logging.info(connected + " has freezed their screen")
                 client.send("paused".encode('ascii'))
                
             #WIP, for playing youtube videos
@@ -131,9 +134,9 @@ def connection():
                     if tube.player.can_control():
                         tube.player.set_volume(float(command[2]))
                         
-            #This condition is met if the user wants to play a DVD or Media file.
+            #This condition is met if the user wants to play a Media file.
             elif command[0] == "media" and connected == "":
-                logging.info(connected + " is trying to play a video file or DVD")
+                logging.info(connected + " is trying to play a media file.")
                 subprocess.call("tvservice -p &",shell=True)
                 if tube.player != None:
                     kill(tube.player)
@@ -159,7 +162,6 @@ def connection():
                     #subprocess.call("umount /tmp/DVD",shell=True)
                     subprocess.call("nbd-client -d /dev/nbd0",shell=True)
                     subprocess.call("nbd-client " + str(address[0]) + " -name dvd /dev/nbd0 -b 4096", shell=True)
-                    #subprocess.call("mount /dev/nbd0 /tmp/DVD",shell=True)
                     tube.start_dvd()
                     sub = 0
                     #Get the amount of audio tracks and subtitles avaible on DVD(May cause issues when more than 1 movie on DVD)
@@ -180,6 +182,8 @@ def connection():
                 elif command[0] == "dvd-stop" and tube.dvdplayer != None:
                         tube.dvdplayer.quit()
                         del tube.dvdplayer
+                        tube.dvdplayer = None
+                        subprocess.call("tvservice -o &",shell=True)
                 elif command[0] == "dvd-n-chapt" and tube.dvdplayer != None:
                         tube.dvdplayer._set_property("chapter", tube.dvdplayer._get_property('chapter') + 1)
                         tube.dvdplayer.command('show_text', "Next Chapter " + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("time-pos")))) + "/" + str(datetime.timedelta(seconds=int(tube.dvdplayer._get_property("duration")))))
