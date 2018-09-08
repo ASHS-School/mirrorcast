@@ -27,7 +27,6 @@ class Dvd(object):
         self.playb=Button(controls,text='Play/Pause',command=self.play)
         self.forwardb=Button(controls,text='Fast-Forward',command=self.forward)
         self.stopb=Button(controls,text='Stop',command=self.stop)
-        #self.volb = Scale(controls, from_=0, to=110, orient=HORIZONTAL, label="Volume", showvalue=0, command=self.vol)
         self.state.pack(side=LEFT)
         self.backb.pack(side=LEFT)
         self.playb.pack(side=LEFT)
@@ -98,7 +97,7 @@ class Dvd(object):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((self.receiver, 8092))
-            sock.settimeout(None)
+            sock.settimeout(30)
             sock.send(command.encode('ascii'))
             sock.close()
         except:
