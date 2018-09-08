@@ -31,14 +31,10 @@ class Media(object):
         self.backb.pack(side=LEFT)
         self.playb.pack(side=LEFT)
         self.forwardb.pack(side=LEFT)
-        
-        
         self.audiobackb=Button(controls,text='Audio Track Back',command=self.audioback)
         self.audioforwb=Button(controls,text='Audio Track Up',command=self.audioforw)
         self.audioforwb.pack(side=LEFT)
         self.audiobackb.pack(side=LEFT)
-        self.volb = Scale(controls, from_=-2500, to=400, orient=HORIZONTAL, label="Volume", showvalue=0, command=self.vol)
-        self.volb.set(0)
         self.volb.pack()
     def vol(self, vol):
         cmd = "tube-vol,"
@@ -79,7 +75,7 @@ class Media(object):
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((self.receiver, 8092))
-            sock.settimeout(None)
+            sock.settimeout(30)
             sock.send(command.encode('ascii'))
             sock.close()
         except:
