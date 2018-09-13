@@ -1,5 +1,5 @@
 '''Rough applet for Debian/Ubuntu Systems
-Mirrorcast Version 0.7.2b'''
+Mirrorcast Version 0.7.3b'''
 import socket, gi, subprocess, time, os, threading, logging, dbus,logging.handlers
 from hosts import Hosts as hosts
 from displays import Displays
@@ -187,7 +187,7 @@ class TrayMenu:
             self.state = "casting"
             time.sleep(1)
             display = os.environ['DISPLAY']#get display of current user
-            self.ffmpeg = subprocess.Popen(["ffmpeg", "-loglevel", "warning", "-f", "pulse", "-ac", "2", "-i", "default", "-async", "1", "-f", "x11grab", "-r", "25", "-s", str(res), "-i", str(display) + "+" + str(int(self.Display.xoffset)) + "," + str(self.Display.yoffset), "-aspect", self.hosts.aspect, "-vcodec", "libx264", "-pix_fmt", "yuv420p", "-tune", "zerolatency", "-preset", "ultrafast", "-vf", "scale=" + str(res).replace('x', ':'), "-x264opts", "vbv-maxrate=7700:vbv-bufsize=150:intra-refresh=1:slice-max-size=500:keyint=10:ref=1", "-f", "mpegts", "udp://" + self.hosts.receiver + ":8090"], stdout=subprocess.PIPE)
+            self.ffmpeg = subprocess.Popen(["ffmpeg", "-loglevel", "warning", "-f", "pulse", "-ac", "2", "-i", "default", "-async", "1", "-f", "x11grab", "-r", "25", "-s", str(res), "-i", str(display) + "+" + str(int(self.Display.xoffset)) + "," + str(self.Display.yoffset), "-aspect", self.hosts.aspect, "-vcodec", "libx264", "-pix_fmt", "yuv420p", "-tune", "zerolatency", "-preset", "ultrafast", "-vf", "scale=" + str(res).replace('x', ':'), "-x264opts", "vbv-maxrate=7700:vbv-bufsize=1000:intra-refresh=1:slice-max-size=500:keyint=10:ref=1", "-f", "mpegts", "udp://" + self.hosts.receiver + ":8090"], stdout=subprocess.PIPE)
             self.sound.monitor_audio()
             notify.Notification.new("Connection Established", "Connection to " + self.hosts.receiver + " established.", None).show()
             
