@@ -74,7 +74,7 @@ sudo rpi-update
 ```
 Some dependencies are needed for mpv which is used for DVD playback.
 ```
-sudo apt-get install libgles2-mesa libsdl2-dev libva-dev
+sudo apt-get install libgles2-mesa libsdl2-dev libva-dev nbd-client
 ```
 Create links to libraries
 NOTE: If the links already exist then ignore this part.
@@ -86,7 +86,6 @@ sudo ln -s /usr/lib/arm-linux-gnueabihf/libEGL.so /opt/vc/lib/
 sudo ldconfig
 ```
 Download for pre-compiled packages. 
-NOTE: These packages will not install dependencies so there is a chance you might be missing some.
 ```
 mkdir mpv-mmal && cd mpv-mmal
 #For stretch, try these
@@ -108,6 +107,10 @@ sudo dpkg-reconfigure libdvd-pkg
 ```
 For DVD's you will also need to buy an mpeg2 license from the pi store <a href="https://www.raspberrypi.com/mpeg-2-license-key/">https://www.raspberrypi.com/mpeg-2-license-key/</a> </p>
 
+Verify mpv has all its dependencies.
+```
+mpv --version
+```
 Restart the pi
 
 
