@@ -13,7 +13,7 @@ To achieve this we will use existing FOSS software such as ffmpeg, mpv, and omxp
 
 At the moment you can stream your screen(with audio), play youtube videos, play media files and DVD's.
 
-<p>Video Demo(Updated 15 Sep 2018) <a href="https://www.youtube.com/watch?v=e5ZYp53HmwI">https://www.youtube.com/watch?v=e5ZYp53HmwI</a> </p>
+<p>Video Demo(Updated 15 Sep 2018) <a href="https://www.youtube.com/watch?v=yQ11EVcUL9I">https://www.youtube.com/watch?v=yQ11EVcUL9I</a> </p>
 
 <h2>TO DO:</h2>
 
