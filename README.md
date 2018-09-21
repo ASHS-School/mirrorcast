@@ -3,7 +3,7 @@
 The idea is to replicate what Chromecast can do in regards to screen mirroring and streaming media to a remote display. 
 Google chromes screen mirroring feature works well when used with a receiver such as Chromecast but this is a proprietary solution and audio does not work for desktop mirroring on some operating systems.
 
-At the moment, there is only a client for Debian/Ubuntu Operating systems and a server/receiver application for Raspberry pi.
+At the moment, there is only a client for Debian/Ubuntu Operating systems and a server/receiver application for Raspberry pi..
 
 Mirrorcast aims to be a low latency screen mirroring solution with high quality video and audio at 25-30fps, the later is why we will not use something like VNC.
 
