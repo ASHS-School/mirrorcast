@@ -81,9 +81,7 @@ def connection():
             elif command[0] == "freezee" and connected == command[1]:     
                 ready = False
                 connected = ""
-                if tube.player != None:
-                    time.sleep(1)
-                    tube.player.pause()
+                tube.pause()
                 logging.info(connected + " has freezed their screen")
                 client.send("paused".encode('ascii'))
                
