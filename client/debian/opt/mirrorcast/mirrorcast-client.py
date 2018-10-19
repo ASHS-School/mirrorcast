@@ -125,9 +125,20 @@ class TrayMenu:
         self.indicator.set_menu(self.menu)
         self.sound = Audio()
         self.ffmpeg = None
+        self.srt = None
         self.vlc = None
-        self.sleep = dbus_listen(item_start, self.ffmpeg)
-        
+        self.sleep = dbus_listen(item_start, self)
+
+    def close_stream(self):
+        if self.ffmpeg is not None:
+            if self.ffmpeg.poll() is None:
+                self.ffmpeg.terminate()
+                self.ffmpeg.wait()
+        if self.srt is not None:
+            if self.srt.poll() is None:
+                self.srt.terminate()
+                self.srt.wait()
+
     #the following function is run when the user clicks "Start/Stop Mirroring"
     def start(self, w):
         notify.init("mirrorMenu")
@@ -160,9 +171,7 @@ class TrayMenu:
             self.state = "stopped"
             self.sound.audio(False)
             self.Display.display(False, self.hosts.aspect)
-            if self.ffmpeg != None:
-                if self.ffmpeg.poll() == None:
-                    self.ffmpeg.terminate()
+            self.close_stream()
             w.set_label('Start Mirroring')
             return
     
@@ -187,7 +196,8 @@ class TrayMenu:
             self.state = "casting"
             time.sleep(1)
             display = os.environ['DISPLAY']#get display of current user
-            self.ffmpeg = subprocess.Popen(["ffmpeg", "-loglevel", "warning", "-f", "pulse", "-ac", "2", "-i", "default", "-async", "1", "-f", "x11grab", "-r", "25", "-s", str(res), "-i", str(display) + "+" + str(int(self.Display.xoffset)) + "," + str(self.Display.yoffset), "-aspect", self.hosts.aspect, "-vcodec", "libx264", "-pix_fmt", "yuv420p", "-tune", "zerolatency", "-preset", "ultrafast", "-vf", "scale=" + str(res).replace('x', ':'), "-x264opts", "vbv-maxrate=7700:vbv-bufsize=1000:intra-refresh=1:slice-max-size=500:keyint=10:ref=1", "-f", "mpegts", "udp://" + self.hosts.receiver + ":8090"], stdout=subprocess.PIPE)
+            self.ffmpeg = subprocess.Popen(["ffmpeg", "-loglevel", "warning", "-f", "pulse", "-ac", "2", "-i", "default", "-async", "1", "-f", "x11grab", "-r", "25", "-s", str(res), "-i", str(display) + "+" + str(int(self.Display.xoffset)) + "," + str(self.Display.yoffset), "-aspect", self.hosts.aspect, "-vcodec", "libx264", "-pix_fmt", "yuv420p", "-tune", "zerolatency", "-preset", "ultrafast", "-vf", "scale=" + str(res).replace('x', ':'), "-x264opts", "vbv-maxrate=7700:vbv-bufsize=1000:intra-refresh=1:slice-max-size=500:keyint=10:ref=1", "-f", "mpegts", "-"], stdout=subprocess.PIPE)
+            self.srt = subprocess.Popen(["stransmit", "file://con", "srt://{}:8090?mode=client&pbkeylen=0".format(self.hosts.receiver)], stdin=self.ffmpeg.stdout, stdout=subprocess.PIPE)
             self.sound.monitor_audio()
             notify.Notification.new("Connection Established", "Connection to " + self.hosts.receiver + " established.", None).show()
             
@@ -220,7 +230,7 @@ class TrayMenu:
                     sock.send(command.encode('ascii'))
                     status = sock.recv(1024)
                     if status.decode('ascii') == "paused":
-                        self.ffmpeg.terminate()
+                        self.close_stream()
                         w.set_label('Start Mirroring')
                         notify.init("mirrorMenu")
                         notify.Notification.new("Freezed", "You have frozen your current desktop, click Start Mirroring to resume", None).show()
@@ -241,8 +251,7 @@ class TrayMenu:
                     i = i + 1
                     if i == 1:
                         mirror_logger.warning("Attempting to reconnect to " + self.hosts.receiver)
-                        if  self.ffmpeg.poll() == None:
-                            self.ffmpeg.terminate()
+                        self.close_stream()
                         notify.Notification.new("Reconnecting", "Connection to " + self.hosts.receiver + " has been lost. Attempting to reconnect.", None).show()
                         time.sleep(2)
                     if self.connect("play,") == True:
@@ -262,9 +271,7 @@ class TrayMenu:
         self.state = "stopped"
         self.Display.display(False, self.hosts.aspect)
         #kill ffmpeg incase user forgot to click "stop"
-        if self.ffmpeg != None:
-            if self.ffmpeg.poll() == None:
-                self.ffmpeg.terminate()
+        self.close_stream()
         gtk.main_quit()
 
     def freeze(self, w):
@@ -317,7 +324,7 @@ class TrayMenu:
             time.sleep(2)
             self.send_cmd("media-start," + os.path.basename(file) + ",")
             mediaui(self.hosts.receiver)
-            self.ffmpeg.terminate()
+            self.close_stream()
         
             
     def dvd(self, w):
@@ -447,15 +454,13 @@ class dbus_listen():
     def handle_sleep(self, *args):
         self.w.set_label('Start Mirroring')
         mirror_logger.info("User computer is going to sleep, killing ffmpeg")
-        if self.ffmpeg != None:
-            if self.ffmpeg.poll() == None:
-                self.ffmpeg.terminate()
+        self.tray.close_stream()
         self.sleep = True
-    
-    def __init__(self, w, ffmpeg):
+
+    def __init__(self, w, tray):
         self.sleep = False
         self.w = w
-        self.ffmpeg = ffmpeg
+        self.tray = tray
         DBusGMainLoop(set_as_default=True)     # integrate into gobject main loop
         bus = dbus.SystemBus()                 # connect to system wide dbus
         bus.add_signal_receiver(               # define the signal to listen to

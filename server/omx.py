@@ -3,12 +3,17 @@
 
 from omxplayer.player import OMXPlayer
 import mpv
-import subprocess,time
+import subprocess
+import time
+import os
+
+NAMED_PIPE = "/tmp/input_stream.ts"
 
 class Omx():
     def __init__(self):
         self.url = "None"
         self.player = None
+        self.srt = None
         self.dvdplayer = None
         self.subs = 0
         self.audio_tracks = 0
@@ -65,8 +70,26 @@ class Omx():
             if item['type'] == 'audio':
                 self.audio_tracks += 1
         return
-    
+
+    def close_srt(self):
+        if self.srt and self.srt.poll() is None:
+            self.srt.terminate()
+            self.srt.wait()
+
+    def pause(self):
+        if self.player:
+            time.sleep(1)
+            self.player.pause()
+        self.close_srt()
+
     def mirror(self):
-        self.player = OMXPlayer("udp://0.0.0.0:8090?listen", args=['-o', 'hdmi', '--lavfdopts', 'probesize:8000', '--timeout', '0', '--threshold', '0'])
+        self.make_pipe()
+        self.player = OMXPlayer(NAMED_PIPE, args=['-o', 'hdmi', '--lavfdopts', 'probesize:8000', '--timeout', '0', '--threshold', '0'])
+        with open(NAMED_PIPE, "wb", 0) as output_stream:
+            self.srt = subprocess.Popen(["stransmit", "srt://:8090?mode=server&pbkeylen=0", "file://con"], stdout=output_stream)
         return
-    
+
+    def make_pipe(self):
+        if os.path.exists(NAMED_PIPE):
+            os.remove(NAMED_PIPE)
+        os.mkfifo(NAMED_PIPE)
