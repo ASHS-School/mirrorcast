@@ -53,6 +53,14 @@ Then add/edit the hostnames or ip addresses of your receivers in /opt/mirrorcast
 Install omxplayer. 
 Install youtube-dl and python-omxplayer-wrapper for python3. Make sure you install the requirements for both of these.
 
+You will also need to compile stransmit/srt and place it in /usr/local/bin/
+If you do not want to compile it yourself I have a precompiled version that you can use.
+```
+wget http://3djakedesigns.org/debian/stretch/stransmit
+mv stransmit /usr/local/bin/
+chmod +x /usr/local/bin/stransmit
+```
+
 Then download mirrorcast_server_pi.py and omx.py from the server folder or just clone the whole repo.
 
 Install python-mpv
