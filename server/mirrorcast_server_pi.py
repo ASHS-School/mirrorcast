@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #Mirrorcast Server for Raspberry Pi.
 #Please use python3 and not 2.7, 2.7 will cause problems
-#Mirrorcast Server Version 0.7.0b
+#Mirrorcast Server Version 0.7.5b
 import socket,subprocess,time,logging, threading, os, datetime
 from omx import Omx
 
@@ -45,7 +45,7 @@ def connection():
                 client.send("busy".encode('ascii'))
                 logging.info(str(command[1]) + " tried to connect but " + str(connected) + " is already connected")
             #User started Casting/Mirroring or has Reconnected
-            if command[0] == "play":
+            if command[0] == "play" or command[0] == "play-srt":
                 if connected == "":
                     connected = command[1]
                     logging.info(connected + " has connected")
@@ -58,7 +58,10 @@ def connection():
                         tube.dvdplayer.quit()
                     subprocess.call("tvservice -p &",shell=True)
                     #Set up omxplayer to mirror screen.
-                    tube.mirror()
+                    if command[0] == "play":
+                        tube.mirror()
+                    else:
+                        tube.mirror_srt()
                     #Wait for omxplayer to load stream.
                     time.sleep(5)
                     #Inform client that it is now ok to start ffmpeg
