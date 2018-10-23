@@ -153,7 +153,7 @@ class TrayMenu:
             mirror_logger.info("User is trying to connect to " + self.hosts.receiver)
             #If we cannot connect to the receiver
             try:
-                if self.connect("play,") == False:
+                if self.connect("play-srt,") == False:
                     notify.init("mirrorMenu")
                     notify.Notification.new("Connection Error", "Could not connect to" + self.hosts.receiver + ". please try again and if problem persists then please contact your system administrator.", None).show()
                     mirror_logger.warning("Failed to connect to " + self.hosts.receiver)
