@@ -82,12 +82,15 @@ class Omx():
             self.player.pause()
         self.close_srt()
 
-    def mirror(self):
+    def mirror_srt(self):
         self.make_pipe()
         self.player = OMXPlayer(NAMED_PIPE, args=['-o', 'hdmi', '--lavfdopts', 'probesize:8000', '--timeout', '0', '--threshold', '0'])
         with open(NAMED_PIPE, "wb", 0) as output_stream:
             self.srt = subprocess.Popen(["stransmit", "srt://:8090?mode=server&pbkeylen=0", "file://con"], stdout=output_stream)
         return
+
+    def mirror(self):
+            self.player = OMXPlayer("udp://0.0.0.0:8090?listen", args=['-o', 'hdmi', '--lavfdopts', 'probesize:8000', '--timeout', '0', '--threshold', '0'])
 
     def make_pipe(self):
         if os.path.exists(NAMED_PIPE):
