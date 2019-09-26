@@ -5,8 +5,6 @@ from hosts import Hosts as hosts
 from displays import Displays
 from audio import Audio
 from tube import Tube
-from media import Media
-from dvd import Dvd
 from tkinter import *
 from tkinter.filedialog import askopenfilename
 gi.require_version('AppIndicator3', '0.1')
@@ -43,12 +41,6 @@ class TrayMenu:
         self.media_sub = gtk.Menu()
         item_media= gtk.MenuItem('Play Media (Experimental)')
         item_media.set_submenu(self.media_sub)
-        item_file = gtk.MenuItem('Media File')
-        item_file.connect('activate', self.file)
-        self.media_sub.append(item_file)
-        item_dvd = gtk.MenuItem('Play DVD')
-        item_dvd.connect('activate', self.dvd)
-        self.media_sub.append(item_dvd)
         item_youtube = gtk.MenuItem('Youtube URL')
         item_youtube.connect('activate', self.youtube)
         self.media_sub.append(item_youtube)
@@ -282,76 +274,6 @@ class TrayMenu:
         self.state = "freeze"
         return
         
-    def update(self, w):
-        if self.state == "casting":
-            notify.init("mirrorMenu")
-            notify.Notification.new("Cannot Update", "Please stop mirroring before you try to update", None).show()
-            return
-        subprocess.call("/opt/mirrorcast/mirrorcast-autoupdater.sh", shell=True)
-        gtk.main_quit()
-        return
-        
-    def file(self, w):
-        if self.state == "casting":
-            notify.init("mirrorMenu")
-            notify.Notification.new("Error", "Please stop mirroring before you try to use this feature", None).show()
-        else:
-            if self.hosts.receiver == "None":
-                notify.init("mirrorMenu")
-                notify.Notification.new("Error", "Please select a receiving device", None).show()
-                return
-            if self.connect("media,") == False:
-                notify.init("mirrorMenu")
-                notify.Notification.new("Connection Error", "Could not connect to" + self.hosts.receiver + ". please try again and if problem persists then please contact your system administrator.", None).show()
-                mirror_logger.warning("Failed to connect to " + self.hosts.receiver)
-                return
-            mirror_logger.info("User connected to " + self.hosts.receiver + " to play media file")
-            select = Tk()
-            select.withdraw()
-            types= [("Video Files", ("*.mp4","*.avi","*.mov","*.mkv","*.flv","*.mpeg","*.mpg","*.wmv", "*.webm", "*.ogg", "*.ogv")), ("All files", "*.*")]
-            file = askopenfilename(filetypes=types)
-            select.destroy()
-            if file == () or file == None or file == "":
-                return
-            newpath = r'/tmp/media' 
-            if not os.path.exists(newpath):
-                os.makedirs(newpath)
-            if os.path.isfile(file):
-                if not os.path.isfile(newpath + '/' + os.path.basename(file)):
-                    os.symlink(str(file), "/tmp/media/" + os.path.basename(file))
-                    
-            self.ffmpeg = subprocess.Popen(["http-server", "/tmp/media", "-p", "8090"], stdout=subprocess.PIPE)
-            time.sleep(2)
-            self.send_cmd("media-start," + os.path.basename(file) + ",")
-            mediaui(self.hosts.receiver)
-            self.close_stream()
-        
-            
-    def dvd(self, w):
-        if self.state == "casting":
-            notify.init("mirrorMenu")
-            notify.Notification.new("Error", "Please stop mirroring before you try to use this feature", None).show()
-        else:
-            if self.hosts.receiver == "None":
-                notify.init("mirrorMenu")
-                notify.Notification.new("Error", "Please select a receiving device", None).show()
-                return
-            if self.connect("media,") == False:
-                notify.init("mirrorMenu")
-                notify.Notification.new("Connection Error", "Could not connect to" + self.hosts.receiver + ". please try again and if problem persists then please contact your system administrator.", None).show()
-                mirror_logger.warning("Failed to connect to " + self.hosts.receiver)
-                return
-            mirror_logger.info("User connected to " + self.hosts.receiver + " to stream DVD")
-        #Use lsdvd to retreive keys for encrypted dvd's, requires libdvd-pkg and lsdvd
-        try:
-            subprocess.check_output("lsdvd", shell=True)
-        except:
-            notify.init("mirrorMenu")
-            notify.Notification.new("Error", "Please insert a DVD first or wait for DVD to load.", None).show()
-            return
-        self.send_cmd("dvd-start,")
-        ui = dvdui(self.hosts.receiver)
-            
     def youtube(self, w):
         if self.state == "casting":
             notify.init("mirrorMenu")
@@ -420,35 +342,6 @@ class tubeui():
         self.m.on_closing()
         self.root.destroy()
         
-        
-class mediaui():
-    def __init__(self, receiver):
-        self.root=Tk()
-        self.m=Media(self.root)
-        self.m.receiver=receiver
-        self.root.title("Receiver Controls")
-        self.root.protocol("WM_DELETE_WINDOW", self.on_exit)
-        self.root.mainloop()
-        
-    def on_exit(self):
-        self.m.on_closing()
-        self.root.destroy()
-        #reactor.stop()
-
-class dvdui():
-    def __init__(self, receiver):
-        self.root=Tk()
-        self.m=Dvd(self.root)
-        self.m.receiver=receiver
-        self.root.title("Receiver Controls")
-        self.root.protocol("WM_DELETE_WINDOW", self.on_exit)
-        self.root.mainloop()
-        
-    def on_exit(self):
-        self.m.on_closing()
-        self.root.destroy()
-        #reactor.stop()
-
 class dbus_listen(): 
     
     def handle_sleep(self, *args):
