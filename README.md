@@ -1,3 +1,5 @@
+Lite Development branch, has not been tested.
+
 # Mirrorcast - Open Source Alternative to Chromecast
 
 The idea is to replicate what Chromecast can do in regards to screen mirroring and streaming media to a remote display. 
